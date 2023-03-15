@@ -17,7 +17,7 @@
     <!--  В файл -->
     <property name="LOG_DIR" value="./log" />
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>${LOG_DIR}/myStore.log</file>
+        <file>${LOG_DIR}/eStore.log</file>
         <encoder>
             <pattern>%d{DD/MM/YYYY HH:mm:ss.SSS} | %-10.10thread | %5p | %-36.36logger{36} | %m%n</pattern>
         </encoder>
