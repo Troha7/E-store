@@ -31,4 +31,7 @@ public class Product {
     @Column
     private BigDecimal price;
 
+    @Column
+    private int quantity;
+
 }
