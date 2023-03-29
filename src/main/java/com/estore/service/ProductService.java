@@ -9,6 +9,7 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -32,6 +33,7 @@ public class ProductService {
      * @param productRequestDto object with data
      * @return ProductResponseDto
      */
+    @Transactional
     public Mono<ProductResponseDto> create(ProductRequestDto productRequestDto) {
         log.info("Start to create product");
         Product product = objectMapper.convertValue(productRequestDto, Product.class);
@@ -50,7 +52,8 @@ public class ProductService {
      * @param productRequestDto object with data
      * @return ProductResponseDto
      */
-    public Mono<ProductResponseDto> update(long id, ProductRequestDto productRequestDto) {
+    @Transactional
+    public Mono<ProductResponseDto> update(Long id, ProductRequestDto productRequestDto) {
         log.info("Start to update product id={}", id);
         Product product = objectMapper.convertValue(productRequestDto, Product.class);
         product.setId(id);
@@ -81,7 +84,7 @@ public class ProductService {
      * @return ProductResponseDto
      * @throws EntityNotFoundException Product with id wasn't found
      */
-    public Mono<ProductResponseDto> findById(long id) {
+    public Mono<ProductResponseDto> findById(Long id) {
         log.info("Start to find product by id={}", id);
         return productRepository.findById(id)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Product id=" + id + " wasn't found")))
@@ -111,7 +114,8 @@ public class ProductService {
      *
      * @param id product id
      */
-    public Mono<Void> deleteById(long id) {
+    @Transactional
+    public Mono<Void> deleteById(Long id) {
         log.info("Start to delete product by id={}", id);
         return productRepository.findById(id)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Product id=" + id + " wasn't found")))
@@ -123,6 +127,7 @@ public class ProductService {
     /**
      * Delete all products
      */
+    @Transactional
     public Mono<Void> deleteAll() {
         log.info("Start to delete all products");
         return productRepository.deleteAll()
