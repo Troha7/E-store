@@ -102,7 +102,7 @@ public class ProductService {
      */
     public Flux<ProductResponseDto> findByNameContaining(String name) {
         log.info("Start to find all products containing name={}", name);
-        return productRepository.findByNameContaining(name)
+        return productRepository.findByNameContaining("%" + name + "%") // ("%" + name + "%") - pattern matching
                 .switchIfEmpty(Flux.error(new EntityNotFoundException("Products containing name=" + name + " wasn't found")))
                 .doOnError(p -> log.warn("Products containing name={} wasn't found", name))
                 .map(p -> objectMapper.convertValue(p, ProductResponseDto.class))
