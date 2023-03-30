@@ -18,13 +18,17 @@ public interface ProductRepository extends ReactiveCrudRepository<Product, Long>
 
     Mono<Product> findByName(String name);
 
+    @Query("SELECT p.id, p.name, p.description, p.price " +
+            "FROM e_store.product p " +
+            "WHERE p.name " +
+            "ILIKE :name") //ILIKE - Ignored case font text
     Flux<Product> findByNameContaining(String name);
 
     @Query("select p.*, oi.quantity " +
             "from e_store.product p " +
             "join e_store.order_item oi " +
             "on p.id = oi.fk_product_id " +
-            "where oi.fk_order_id = :item_id " +
+            "where oi.fk_order_id = :order_id " +
             "order by p.name")
     Flux<Product> findProductsByOrderId(Long orderId);
 
