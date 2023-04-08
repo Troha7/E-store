@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 /**
  * {@link ProductService}
  *
@@ -102,7 +104,7 @@ public class ProductService {
      */
     public Flux<ProductResponseDto> findByNameContaining(String name) {
         log.info("Start to find all products containing name={}", name);
-        return productRepository.findByNameContaining("%" + name + "%") // ("%" + name + "%") - pattern matching
+        return productRepository.findByNameContaining(name)
                 .switchIfEmpty(Flux.error(new EntityNotFoundException("Products containing name=" + name + " wasn't found")))
                 .doOnError(p -> log.warn("Products containing name={} wasn't found", name))
                 .map(p -> objectMapper.convertValue(p, ProductResponseDto.class))
@@ -132,6 +134,10 @@ public class ProductService {
         log.info("Start to delete all products");
         return productRepository.deleteAll()
                 .doOnSuccess(p -> log.info("All products have been deleted"));
+    }
+
+    public Mono<Boolean> existsProductByIdIn(List<Long> productIds) {
+        return productRepository.existsProductByIdIn(productIds, productIds.size());
     }
 
 }
