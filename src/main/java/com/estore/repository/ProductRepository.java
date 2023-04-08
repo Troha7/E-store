@@ -2,10 +2,14 @@ package com.estore.repository;
 
 import com.estore.model.Product;
 import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+
 
 /**
  * {@link ProductRepository}
@@ -18,18 +22,11 @@ public interface ProductRepository extends ReactiveCrudRepository<Product, Long>
 
     Mono<Product> findByName(String name);
 
-    @Query("SELECT p.id, p.name, p.description, p.price " +
-            "FROM e_store.product p " +
-            "WHERE p.name " +
-            "ILIKE :name") //ILIKE - Ignored case font text
     Flux<Product> findByNameContaining(String name);
 
-    @Query("select p.*, oi.quantity " +
-            "from e_store.product p " +
-            "join e_store.order_item oi " +
-            "on p.id = oi.fk_product_id " +
-            "where oi.fk_order_id = :order_id " +
-            "order by p.name")
-    Flux<Product> findProductsByOrderId(Long orderId);
+    @Query("SELECT COUNT(*) = :list_size " +
+            "FROM e_store.product p " +
+            "WHERE p.id IN (:list) ")
+    Mono<Boolean> existsProductByIdIn(@Param("list") List<Long> productIds, @Param("list_size") int listSize);
 
 }
