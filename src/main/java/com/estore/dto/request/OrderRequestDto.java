@@ -20,6 +20,6 @@ public class OrderRequestDto {
 
     private LocalDate date;
 
-    private List<OrderItemRequestDto> Products;
+    private List<OrderItemRequestDto> products;
 
 }
