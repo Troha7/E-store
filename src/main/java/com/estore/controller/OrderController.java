@@ -4,6 +4,7 @@ import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
 import com.estore.dto.response.OrderItemResponseDto;
 import com.estore.dto.response.OrderResponseDto;
+import com.estore.dto.response.OrderWithProductsResponseDto;
 import com.estore.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,7 +41,7 @@ public class OrderController {
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Add product and quantity an Order by order id")
     public Mono<OrderItemResponseDto> addProduct(@PathVariable long orderId, @RequestBody OrderItemRequestDto orderItem) {
-        return orderService.addProduct(orderId, orderItem);
+        return orderService.addProductByOrderId(orderId, orderItem);
     }
 
     @PutMapping("/{id}")
@@ -53,14 +54,14 @@ public class OrderController {
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Find all Orders")
-    public Flux<OrderResponseDto> findAll() {
+    public Flux<OrderWithProductsResponseDto> findAll() {
         return orderService.findAll();
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Find an Order by id")
-    public Mono<OrderResponseDto> findById(@PathVariable("id") long id) {
+    public Mono<OrderWithProductsResponseDto> findById(@PathVariable("id") long id) {
         return orderService.findById(id);
     }
 
