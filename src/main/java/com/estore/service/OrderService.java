@@ -163,7 +163,7 @@ public class OrderService {
      * @return The order with the loaded related products
      */
     private Mono<OrderWithProductsResponseDto> loadOrderRelations(Order order) {
-        return orderItemService.findAllProductsByOrderId(order.getId()).collectList()
+        return orderItemService.findAllOrderItemsWithProductsByOrderId(order.getId()).collectList()
                 .map(orderItems -> {
                     OrderWithProductsResponseDto orderWithProducts = objectMapper.convertValue(order, OrderWithProductsResponseDto.class);
                     orderWithProducts.setOrderItems(orderItems);
