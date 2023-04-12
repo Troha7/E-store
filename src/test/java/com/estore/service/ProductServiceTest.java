@@ -1,10 +1,9 @@
-package com.estore;
+package com.estore.service;
 
 import com.estore.dto.request.ProductRequestDto;
 import com.estore.dto.response.ProductResponseDto;
 import com.estore.model.Product;
 import com.estore.repository.ProductRepository;
-import com.estore.service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
