@@ -67,10 +67,7 @@ public class OrderItemServiceTest {
         log.info("Starting testFindAllOrderItemsWithProductsByOrderId");
 
         Long orderId = 1L;
-        List<OrderItem> filteredOrderItems = orderItemList.stream()
-                .skip(1)
-                .filter(o -> o.getOrderId().equals(orderId))
-                .toList();
+        List<OrderItem> filteredOrderItems = filterOrderItemsByOrderId(orderId);
 
         when(orderItemRepository.findAllByOrderId(orderId)).thenReturn(Flux.fromIterable(filteredOrderItems));
         when(orderItemRepository.findProductsByOrderId(orderId)).thenReturn(Flux.fromIterable(productList));
@@ -115,10 +112,7 @@ public class OrderItemServiceTest {
         Long orderId = 1L;
         var addedOrderItem = new OrderItem(null, orderId, 3L, 10);
 
-        List<OrderItem> filteredOrderItems = orderItemList.stream()
-                .skip(1)
-                .filter(o -> o.getOrderId().equals(orderId))
-                .toList();
+        List<OrderItem> filteredOrderItems = filterOrderItemsByOrderId(orderId);
 
         when(orderItemRepository.existByOrderIdAndProductId(orderId, addedOrderItem.getProductId())).thenReturn(Mono.just(Boolean.TRUE));
         when(orderItemRepository.findAllByOrderId(orderId)).thenReturn(Flux.fromIterable(filteredOrderItems));
@@ -139,10 +133,7 @@ public class OrderItemServiceTest {
         Long orderId = 1L;
         var addedOrderItem = new OrderItemRequestDto(2L, 10);
 
-        List<OrderItem> filteredOrderItems = orderItemList.stream()
-                .skip(1)
-                .filter(o -> o.getOrderId().equals(orderId))
-                .toList();
+        List<OrderItem> filteredOrderItems = filterOrderItemsByOrderId(orderId);
 
         OrderItem savedOrderItem = filteredOrderItems.stream()
                 .filter(o -> o.getProductId().equals(addedOrderItem.getProductId()))
@@ -175,10 +166,7 @@ public class OrderItemServiceTest {
         Long orderId = 100L;
         var addedOrderItem = new OrderItem(null, orderId, 3L, 10);
 
-        List<OrderItem> filteredOrderItems = orderItemList.stream()
-                .skip(1)
-                .filter(o -> o.getOrderId().equals(orderId))
-                .toList();
+        List<OrderItem> filteredOrderItems = filterOrderItemsByOrderId(orderId);
 
         when(orderItemRepository.existByOrderIdAndProductId(orderId, addedOrderItem.getProductId())).thenReturn(Mono.just(Boolean.FALSE));
         when(orderItemRepository.findAllByOrderId(orderId)).thenReturn(Flux.fromIterable(filteredOrderItems));
@@ -199,10 +187,7 @@ public class OrderItemServiceTest {
         Long orderId = 1L;
         var addedOrderItem = new OrderItem(null, orderId, 3L, 10);
 
-        List<OrderItem> filteredOrderItems = orderItemList.stream()
-                .skip(1)
-                .filter(o -> o.getOrderId().equals(orderId))
-                .toList();
+        List<OrderItem> filteredOrderItems = filterOrderItemsByOrderId(orderId);
 
         when(orderItemRepository.existByOrderIdAndProductId(orderId, addedOrderItem.getProductId())).thenReturn(Mono.just(Boolean.FALSE));
         when(orderItemRepository.findAllByOrderId(orderId)).thenReturn(Flux.fromIterable(filteredOrderItems));
@@ -213,6 +198,13 @@ public class OrderItemServiceTest {
                 .verify();
 
         log.info("Test testAddProductByOrderIdProductNotExist completed.");
+    }
+
+    private List<OrderItem> filterOrderItemsByOrderId(Long orderId) {
+        return orderItemList.stream()
+                .skip(1)
+                .filter(o -> o.getOrderId().equals(orderId))
+                .toList();
     }
 
 }
