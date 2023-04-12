@@ -38,7 +38,7 @@ public class OrderItemService {
      * @return OrderItemWithProductResponseDto objects containing order item and product information
      */
 
-    public Flux<OrderItemWithProductResponseDto> findAllProductsByOrderId(Long id) {
+    public Flux<OrderItemWithProductResponseDto> findAllOrderItemsWithProductsByOrderId(Long id) {
 
         return orderItemRepository.findAllByOrderId(id)
                 .map(o -> objectMapper.convertValue(o, OrderItemWithProductResponseDto.class))
@@ -96,7 +96,7 @@ public class OrderItemService {
      * @return OrderItemRequestDto if existed Order and Product in repository.
      * @throws EntityNotFoundException If the order or product is not found.
      */
-    public Mono<OrderItemRequestDto> checkExistOrderAndProduct(Long orderId, OrderItemRequestDto orderItemRequestDto) {
+    private Mono<OrderItemRequestDto> checkExistOrderAndProduct(Long orderId, OrderItemRequestDto orderItemRequestDto) {
         return orderItemRepository.existByOrderIdAndProductId(orderId, orderItemRequestDto.getProductId())
                 .filter(exists -> exists)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Order or Product not found")))
