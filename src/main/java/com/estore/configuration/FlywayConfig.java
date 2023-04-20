@@ -22,6 +22,7 @@ public class FlywayConfig {
                         env.getRequiredProperty("spring.flyway.url"),
                         env.getRequiredProperty("spring.flyway.user"),
                         env.getRequiredProperty("spring.flyway.password"))
+                .cleanDisabled(env.containsProperty("spring.flyway.cleanDisabled"))
         );
     }
 }
