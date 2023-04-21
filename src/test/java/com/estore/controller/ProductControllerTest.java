@@ -165,6 +165,18 @@ public class ProductControllerTest {
                 .value(product -> assertProductEquals(savedProduct, product));
     }
 
+    @Test
+    void shouldThrowExceptionIfProductNameAlreadyExist() {
+
+        saveToRepository(products);
+        var existedProduct = products.get(0);
+
+        webTestClient.post().uri(URI)
+                .bodyValue(existedProduct)
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
+
     //-----------------------------------
     //         Private methods
     //-----------------------------------
