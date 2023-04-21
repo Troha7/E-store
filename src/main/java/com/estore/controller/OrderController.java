@@ -33,7 +33,7 @@ public class OrderController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new Order")
-    public Mono<OrderResponseDto> createOrder() {
+    public Mono<OrderWithProductsResponseDto> createOrder() {
         return orderService.create();
     }
 

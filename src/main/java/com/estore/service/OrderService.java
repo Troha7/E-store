@@ -47,10 +47,10 @@ public class OrderService {
      * @return the saved order without the related entities
      */
     @Transactional
-    public Mono<OrderResponseDto> create() {
+    public Mono<OrderWithProductsResponseDto> create() {
         log.info("Start to create order");
         return orderRepository.save(new Order(null, null, LocalDate.now()))
-                .map(o -> objectMapper.convertValue(o, OrderResponseDto.class))
+                .map(o -> objectMapper.convertValue(o, OrderWithProductsResponseDto.class))
                 .doOnSuccess(o -> log.info("Order id={} have been created", o.getId()));
     }
 
@@ -110,6 +110,20 @@ public class OrderService {
                 .flatMap(o -> Mono.zip(Mono.just(o), orderItemRepository.deleteAllByOrderId(id)).thenReturn(o))
                 .flatMap(orderRepository::delete)
                 .doOnSuccess(o -> log.info("Order id={} has been deleted", id));
+    }
+
+    /**
+     * Deletes all Orders.
+     * Also deletes all related order items.
+     *
+     * @return Mono<Void>
+     */
+    @Transactional
+    public Mono<Void> deleteAll() {
+        log.info("Start to delete all Orders");
+        return orderItemRepository.deleteAll()
+                .then(orderRepository.deleteAll())
+                .doOnSuccess(o -> log.info("All Orders has been deleted"));
     }
 
     /**
