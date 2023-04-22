@@ -62,8 +62,9 @@ public class OrderService {
      * @return the saved order item without the related products
      */
 
-    public Mono<OrderItemResponseDto> addProductByOrderId(Long id, OrderItemRequestDto orderItemRequestDto) {
-        return orderItemService.addProductByOrderId(id, orderItemRequestDto);
+    public Mono<OrderWithProductsResponseDto> addProductByOrderId(Long id, OrderItemRequestDto orderItemRequestDto) {
+        return orderItemService.addProductByOrderId(id, orderItemRequestDto)
+                .then(findById(id));
     }
 
     /**

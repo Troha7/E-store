@@ -2,7 +2,6 @@ package com.estore.controller;
 
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
-import com.estore.dto.response.OrderItemResponseDto;
 import com.estore.dto.response.OrderResponseDto;
 import com.estore.dto.response.OrderWithProductsResponseDto;
 import com.estore.service.OrderService;
@@ -40,7 +39,7 @@ public class OrderController {
     @PostMapping("/{orderId}")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Add product and quantity an Order by order id")
-    public Mono<OrderItemResponseDto> addProduct(@PathVariable long orderId, @RequestBody OrderItemRequestDto orderItem) {
+    public Mono<OrderWithProductsResponseDto> addProduct(@PathVariable long orderId, @RequestBody OrderItemRequestDto orderItem) {
         return orderService.addProductByOrderId(orderId, orderItem);
     }
 
