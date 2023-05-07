@@ -2,6 +2,7 @@ package com.estore.controller;
 
 import com.estore.configuration.TestContainerConfig;
 import com.estore.dto.request.OrderItemRequestDto;
+import com.estore.dto.request.OrderRequestDto;
 import com.estore.dto.response.OrderItemWithProductResponseDto;
 import com.estore.dto.response.OrderWithProductsResponseDto;
 import com.estore.model.Product;
@@ -175,6 +176,29 @@ public class OrderControllerTest {
     }
 
     @Test
+    void shouldSummarizingQuantityWhenAddedProductToOrderById() {
+
+        OrderWithProductsResponseDto orderWithProducts = orderService.create()
+                .flatMap(o -> orderService.addProductByOrderId(o.getId(), new OrderItemRequestDto(1L, 1)))
+                .block();
+
+        assert orderWithProducts != null;
+        Long id = orderWithProducts.getId();
+
+        List<OrderItemWithProductResponseDto> addedOrderItemList = List.of(
+                new OrderItemWithProductResponseDto(null, products.get(0), 2));
+
+        var addedOrderWithProducts = new OrderWithProductsResponseDto(null, LocalDate.now(), addedOrderItemList);
+
+        webTestClient.post().uri(URI.concat("/{id}"), id)
+                .bodyValue(orderItems.get(0))
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody(OrderWithProductsResponseDto.class)
+                .value(order -> assertOrderEquals(addedOrderWithProducts, order));
+    }
+
+    @Test
     void shouldThrowExceptionIfAddedProductIdDoesNotExist() {
 
         var savedOrder = orderService.create().block();
@@ -200,6 +224,86 @@ public class OrderControllerTest {
                 .expectStatus().is5xxServerError();
     }
 
+    //-----------------------------------
+    //               PUT
+    //-----------------------------------
+
+    @Test
+    void shouldUpdatedExistingOrder() {
+
+        var savedOrderWithProducts = createOrdersWithProducts(3).get(0);
+        Long id = savedOrderWithProducts.getId();
+        LocalDate updatedDate = LocalDate.now().minusDays(3);
+        var orderForUpdate = new OrderRequestDto(updatedDate, orderItems.subList(0, 1));
+
+
+        List<OrderItemWithProductResponseDto> updatedOrderItemList = List.of(
+                new OrderItemWithProductResponseDto(null, products.get(0), 1));
+        var updatedOrderWithProducts = new OrderWithProductsResponseDto(null, updatedDate, updatedOrderItemList);
+
+        webTestClient.put().uri(URI.concat("/{id}"), id)
+                .bodyValue(orderForUpdate)
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(OrderWithProductsResponseDto.class)
+                .value(order -> assertOrderEquals(updatedOrderWithProducts, order));
+    }
+
+    @Test
+    void shouldThrowExceptionUpdatedOrderIdDoesNotExist() {
+
+        var orderForUpdate = new OrderRequestDto(LocalDate.now(), orderItems.subList(0, 1));
+
+        webTestClient.put().uri(URI.concat("/{id}"), NOT_EXISTED_ORDER_ID)
+                .bodyValue(orderForUpdate)
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
+
+    @Test
+    void shouldThrowExceptionUpdatedOrderIfProductHasDuplicate() {
+
+        var savedOrderWithProducts = createOrdersWithProducts(3).get(0);
+        Long id = savedOrderWithProducts.getId();
+
+        List<OrderItemRequestDto> orderItemsWithDuplicate = List.of(orderItems.get(0), orderItems.get(0));
+        var orderForUpdate = new OrderRequestDto(LocalDate.now(), orderItemsWithDuplicate);
+
+        webTestClient.put().uri(URI.concat("/{id}"), id)
+                .bodyValue(orderForUpdate)
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
+
+    @Test
+    void shouldThrowExceptionUpdatedOrderIfProductQuantityBelowZero() {
+
+        var savedOrderWithProducts = createOrdersWithProducts(3).get(0);
+        Long id = savedOrderWithProducts.getId();
+
+        List<OrderItemRequestDto> orderItemsWithQuantityBelowZero = List.of(new OrderItemRequestDto(1L, -10));
+        var orderForUpdate = new OrderRequestDto(LocalDate.now(), orderItemsWithQuantityBelowZero);
+
+        webTestClient.put().uri(URI.concat("/{id}"), id)
+                .bodyValue(orderForUpdate)
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
+
+    @Test
+    void shouldThrowExceptionUpdatedOrderIfProductDoesNotExist() {
+
+        var savedOrderWithProducts = createOrdersWithProducts(3).get(0);
+        Long id = savedOrderWithProducts.getId();
+
+        List<OrderItemRequestDto> orderItemsWithNotExistingProduct = List.of(new OrderItemRequestDto(NOT_EXISTED_PRODUCT_ID, 100));
+        var orderForUpdate = new OrderRequestDto(LocalDate.now(), orderItemsWithNotExistingProduct);
+
+        webTestClient.put().uri(URI.concat("/{id}"), id)
+                .bodyValue(orderForUpdate)
+                .exchange()
+                .expectStatus().is5xxServerError();
+    }
 
     //-----------------------------------
     //         Private methods
@@ -227,6 +331,7 @@ public class OrderControllerTest {
     }
 
     private void assertOrderListEquals(List<OrderWithProductsResponseDto> expectedOrders, @NotNull List<OrderWithProductsResponseDto> actualOrders) {
+        assertEquals(expectedOrders.size(), actualOrders.size());
         IntStream.range(0, actualOrders.size())
                 .forEach(i -> assertOrderEquals(expectedOrders.get(i), actualOrders.get(i)));
     }
@@ -240,6 +345,7 @@ public class OrderControllerTest {
         if (actualOrderItems == null) {
             assertNull(expectedOrderItems);
         } else {
+            assertEquals(expectedOrderItems.size(), actualOrderItems.size());
             IntStream.range(0, actualOrderItems.size())
                     .forEach(i -> assertOrderItemEquals(expectedOrderItems.get(i), actualOrderItems.get(i)));
         }
