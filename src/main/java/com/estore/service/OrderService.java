@@ -3,7 +3,6 @@ package com.estore.service;
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
 import com.estore.dto.response.OrderItemResponseDto;
-import com.estore.dto.response.OrderResponseDto;
 import com.estore.dto.response.OrderWithProductsResponseDto;
 import com.estore.model.Order;
 import com.estore.model.OrderItem;
@@ -135,7 +134,8 @@ public class OrderService {
      * @return Updated order and its related order items.
      */
     @Transactional
-    public Mono<OrderResponseDto> update(Long id, OrderRequestDto orderRequestDto) {
+    public Mono<OrderWithProductsResponseDto> update(Long id, OrderRequestDto orderRequestDto) {
+        log.info("Start to update Order id={}", id);
         List<OrderItemRequestDto> orderItemDtos = orderRequestDto.getProducts();
 
         // Validate OrderItems
@@ -157,13 +157,10 @@ public class OrderService {
                                 .collectList()
 
                                 // Update the Order
-                                .zipWith(saveOrderById(id, orderRequestDto))
-                                .map(res -> {
-                                    OrderResponseDto orderResponseDto = objectMapper.convertValue(res.getT2(), OrderResponseDto.class);
-                                    orderResponseDto.setOrderItems(res.getT1());
-                                    return orderResponseDto;
-                                })
-                );
+                                .then(saveOrderById(id, orderRequestDto))
+                                .flatMap(this::loadOrderRelations)
+                )
+                .doOnSuccess(o -> log.info("Order has been updated"));
     }
 
     private Mono<List<OrderItem>> getCurrentOrderItems(Long id) {
@@ -211,8 +208,8 @@ public class OrderService {
      * @param currentOrderItems current OrderItems
      * @return list for add OrderItems from repository
      */
-    private static List<OrderItem> getAddedOrderItems(Long id, List<OrderItemRequestDto> orderItems, List<OrderItem> currentOrderItems) {
-        return IntStream.range(0, orderItems.size())
+    private List<OrderItem> getAddedOrderItems(Long id, List<OrderItemRequestDto> orderItems, List<OrderItem> currentOrderItems) {
+        List<OrderItem> addedOrderItems = IntStream.range(0, orderItems.size())
                 .mapToObj(i -> {
                     OrderItem orderItem = new OrderItem();
                     if (currentOrderItems.size() > i) {
@@ -225,6 +222,9 @@ public class OrderService {
                 })
                 .filter(addedOrderItem -> !currentOrderItems.contains(addedOrderItem))
                 .toList();
+
+                log.info("OrderItems list for updating {}", addedOrderItems);
+        return addedOrderItems;
     }
 
     /**
@@ -235,13 +235,14 @@ public class OrderService {
      * @return list for remove OrderItems from repository
      */
     private static List<OrderItem> getRemovedOrderItems(List<OrderItemRequestDto> orderItems, List<OrderItem> currentOrderItems) {
-        List<Long> prodIds = orderItems.stream()
-                .map(OrderItemRequestDto::getProductId)
+        int skippedOrderItems = Math.min(currentOrderItems.size(), orderItems.size());
+
+        List<OrderItem> removedOrderItems = currentOrderItems.stream()
+                .skip(skippedOrderItems)
                 .toList();
 
-        return currentOrderItems.stream()
-                .filter(currOrderItem -> !prodIds.contains(currOrderItem.getProductId()))
-                .toList();
+        log.info("OrderItems list for deleting {}", removedOrderItems);
+        return removedOrderItems;
     }
 
     /**

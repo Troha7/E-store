@@ -2,7 +2,6 @@ package com.estore.controller;
 
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
-import com.estore.dto.response.OrderResponseDto;
 import com.estore.dto.response.OrderWithProductsResponseDto;
 import com.estore.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,7 +45,7 @@ public class OrderController {
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update an existing Order")
-    public Mono<OrderResponseDto> update(@PathVariable long id, @RequestBody OrderRequestDto order) {
+    public Mono<OrderWithProductsResponseDto> update(@PathVariable long id, @RequestBody OrderRequestDto order) {
         return orderService.update(id, order);
     }
 
