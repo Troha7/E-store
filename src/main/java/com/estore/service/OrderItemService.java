@@ -78,7 +78,8 @@ public class OrderItemService {
                             if (existingOrderItem.getProductId() != null) {
                                 orderItem.setId(existingOrderItem.getId());
                                 orderItem.setQuantity(existingOrderItem.getQuantity() + orderItemRequestDto.getQuantity());
-                                log.info("Updating product and summarizing quantity");
+                                log.info("Updating product and summarizing quantity existingQuantity={} + addedQuantity={}",
+                                        existingOrderItem.getQuantity(), orderItemRequestDto.getQuantity());
                             }
 
                             return orderItemRepository
@@ -96,7 +97,7 @@ public class OrderItemService {
      * @return OrderItemRequestDto if existed Order and Product in repository.
      * @throws EntityNotFoundException If the order or product is not found.
      */
-    private Mono<OrderItemRequestDto> checkExistOrderAndProduct(Long orderId, OrderItemRequestDto orderItemRequestDto) {
+    public Mono<OrderItemRequestDto> checkExistOrderAndProduct(Long orderId, OrderItemRequestDto orderItemRequestDto) {
         return orderItemRepository.existByOrderIdAndProductId(orderId, orderItemRequestDto.getProductId())
                 .filter(exists -> exists)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Order or Product not found")))
