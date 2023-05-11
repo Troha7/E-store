@@ -22,6 +22,6 @@ public class OrderResponseDto {
 
     private LocalDate date;
 
-    private List<OrderItemResponseDto> orderItems;
+    private List<OrderItemWithProductResponseDto> orderItems;
 
 }

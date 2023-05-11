@@ -4,9 +4,11 @@ import com.estore.configuration.TestContainerConfig;
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
 import com.estore.dto.response.OrderItemWithProductResponseDto;
-import com.estore.dto.response.OrderWithProductsResponseDto;
+import com.estore.dto.response.OrderResponseDto;
 import com.estore.model.Product;
+import com.estore.model.User;
 import com.estore.repository.ProductRepository;
+import com.estore.repository.UserRepository;
 import com.estore.service.OrderService;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
@@ -43,6 +45,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class OrderControllerTest {
 
     @Autowired
+    private UserRepository userRepository;
+    @Autowired
     private ProductRepository productRepository;
     @Autowired
     private OrderService orderService;
@@ -54,6 +58,7 @@ public class OrderControllerTest {
 
     private static final String URI = "/orders";
 
+    private final Long USER_ID = null;
     private final Long NOT_EXISTED_ORDER_ID = 100L;
     private final Long NOT_EXISTED_PRODUCT_ID = 100L;
 
@@ -94,7 +99,7 @@ public class OrderControllerTest {
         webTestClient.get().uri(URI)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(OrderWithProductsResponseDto.class)
+                .expectBodyList(OrderResponseDto.class)
                 .value(orderList -> assertTrue(orderList.isEmpty()));
     }
 
@@ -107,7 +112,7 @@ public class OrderControllerTest {
         webTestClient.get().uri(URI)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBodyList(OrderWithProductsResponseDto.class)
+                .expectBodyList(OrderResponseDto.class)
                 .value(orderList -> {
                     assertEquals(ordersNum, orderList.size());
                     assertOrderListEquals(emptyOrders, orderList);
@@ -123,7 +128,7 @@ public class OrderControllerTest {
         webTestClient.get().uri(URI.concat("/{id}"), id)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(OrderWithProductsResponseDto.class)
+                .expectBody(OrderResponseDto.class)
                 .value(order -> assertOrderEquals(savedOrderWithProducts, order));
     }
 
@@ -141,13 +146,19 @@ public class OrderControllerTest {
 
     @Test
     void shouldCreatedNewOrder() {
+        var user = new User(null, "User", "user@gmail.com", "+380999999999", "password");
+        User newUser = userRepository.save(user)
+                .block();
 
-        var expectedOrder = new OrderWithProductsResponseDto(null, LocalDate.now(), null);
+        assert newUser != null;
+        Long userId = newUser.getId();
 
-        webTestClient.post().uri(URI)
+        var expectedOrder = new OrderResponseDto(null, LocalDate.now(), null);
+
+        webTestClient.post().uri(URI.concat("/{userId}"), userId)
                 .exchange()
                 .expectStatus().isCreated()
-                .expectBody(OrderWithProductsResponseDto.class)
+                .expectBody(OrderResponseDto.class)
                 .value(order -> assertOrderEquals(expectedOrder, order));
 
         orderService.findAll()
@@ -159,26 +170,26 @@ public class OrderControllerTest {
     @Test
     void shouldAddedProductToOrderById() {
 
-        var savedOrder = orderService.create().block();
+        var savedOrder = orderService.create(USER_ID).block();
         assertNotNull(savedOrder);
         Long id = savedOrder.getId();
 
         List<OrderItemWithProductResponseDto> addedOrderItemList = List.of(
                 new OrderItemWithProductResponseDto(null, products.get(0), 1));
-        var addedOrderWithProducts = new OrderWithProductsResponseDto(null, LocalDate.now(), addedOrderItemList);
+        var addedOrderWithProducts = new OrderResponseDto(null, LocalDate.now(), addedOrderItemList);
 
-        webTestClient.post().uri(URI.concat("/{id}"), id)
+        webTestClient.post().uri(URI.concat("/add/{id}"), id)
                 .bodyValue(orderItems.get(0))
                 .exchange()
                 .expectStatus().isCreated()
-                .expectBody(OrderWithProductsResponseDto.class)
+                .expectBody(OrderResponseDto.class)
                 .value(order -> assertOrderEquals(addedOrderWithProducts, order));
     }
 
     @Test
     void shouldSummarizingQuantityWhenAddedProductToOrderById() {
 
-        OrderWithProductsResponseDto orderWithProducts = orderService.create()
+        OrderResponseDto orderWithProducts = orderService.create(USER_ID)
                 .flatMap(o -> orderService.addProductByOrderId(o.getId(), new OrderItemRequestDto(1L, 1)))
                 .block();
 
@@ -188,26 +199,26 @@ public class OrderControllerTest {
         List<OrderItemWithProductResponseDto> addedOrderItemList = List.of(
                 new OrderItemWithProductResponseDto(null, products.get(0), 2));
 
-        var addedOrderWithProducts = new OrderWithProductsResponseDto(null, LocalDate.now(), addedOrderItemList);
+        var addedOrderWithProducts = new OrderResponseDto(null, LocalDate.now(), addedOrderItemList);
 
-        webTestClient.post().uri(URI.concat("/{id}"), id)
+        webTestClient.post().uri(URI.concat("/add/{id}"), id)
                 .bodyValue(orderItems.get(0))
                 .exchange()
                 .expectStatus().isCreated()
-                .expectBody(OrderWithProductsResponseDto.class)
+                .expectBody(OrderResponseDto.class)
                 .value(order -> assertOrderEquals(addedOrderWithProducts, order));
     }
 
     @Test
     void shouldThrowExceptionIfAddedProductIdDoesNotExist() {
 
-        var savedOrder = orderService.create().block();
+        var savedOrder = orderService.create(USER_ID).block();
         assertNotNull(savedOrder);
         Long id = savedOrder.getId();
 
         var orderItem = new OrderItemRequestDto(NOT_EXISTED_PRODUCT_ID, 100);
 
-        webTestClient.post().uri(URI.concat("/{id}"), id)
+        webTestClient.post().uri(URI.concat("/add/{id}"), id)
                 .bodyValue(orderItem)
                 .exchange()
                 .expectStatus().is5xxServerError();
@@ -216,9 +227,9 @@ public class OrderControllerTest {
     @Test
     void shouldThrowExceptionAddedProductIfOrderIdDoesNotExist() {
 
-        orderService.create().block();
+        orderService.create(USER_ID).block();
 
-        webTestClient.post().uri(URI.concat("/{id}"), NOT_EXISTED_ORDER_ID)
+        webTestClient.post().uri(URI.concat("/add/{id}"), NOT_EXISTED_ORDER_ID)
                 .bodyValue(orderItems.get(1))
                 .exchange()
                 .expectStatus().is5xxServerError();
@@ -239,13 +250,13 @@ public class OrderControllerTest {
 
         List<OrderItemWithProductResponseDto> updatedOrderItemList = List.of(
                 new OrderItemWithProductResponseDto(null, products.get(0), 1));
-        var updatedOrderWithProducts = new OrderWithProductsResponseDto(null, updatedDate, updatedOrderItemList);
+        var updatedOrderWithProducts = new OrderResponseDto(null, updatedDate, updatedOrderItemList);
 
         webTestClient.put().uri(URI.concat("/{id}"), id)
                 .bodyValue(orderForUpdate)
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(OrderWithProductsResponseDto.class)
+                .expectBody(OrderResponseDto.class)
                 .value(order -> assertOrderEquals(updatedOrderWithProducts, order));
     }
 
@@ -317,10 +328,10 @@ public class OrderControllerTest {
                 .subscribe();
     }
 
-    private @NotNull List<OrderWithProductsResponseDto> createOrdersWithProducts(int num) {
-        List<OrderWithProductsResponseDto> orders = new ArrayList<>();
+    private @NotNull List<OrderResponseDto> createOrdersWithProducts(int num) {
+        List<OrderResponseDto> orders = new ArrayList<>();
         for (int i = 0; i < num; i++) {
-            var savedOrderWithProducts = orderService.create()
+            var savedOrderWithProducts = orderService.create(USER_ID)
                     .flatMap(o -> orderService.addProductByOrderId(o.getId(), orderItems.get(0))
                             .then(orderService.addProductByOrderId(o.getId(), orderItems.get(1)))
                             .then(orderService.addProductByOrderId(o.getId(), orderItems.get(2))))
@@ -330,13 +341,13 @@ public class OrderControllerTest {
         return orders;
     }
 
-    private void assertOrderListEquals(List<OrderWithProductsResponseDto> expectedOrders, @NotNull List<OrderWithProductsResponseDto> actualOrders) {
+    private void assertOrderListEquals(List<OrderResponseDto> expectedOrders, @NotNull List<OrderResponseDto> actualOrders) {
         assertEquals(expectedOrders.size(), actualOrders.size());
         IntStream.range(0, actualOrders.size())
                 .forEach(i -> assertOrderEquals(expectedOrders.get(i), actualOrders.get(i)));
     }
 
-    private void assertOrderEquals(@NotNull OrderWithProductsResponseDto expectedOrder, @NotNull OrderWithProductsResponseDto actualOrder) {
+    private void assertOrderEquals(@NotNull OrderResponseDto expectedOrder, @NotNull OrderResponseDto actualOrder) {
         assertEquals(expectedOrder.getDate(), actualOrder.getDate());
         assertOrderItemListEquals(expectedOrder.getOrderItems(), actualOrder.getOrderItems());
     }

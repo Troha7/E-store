@@ -3,7 +3,7 @@ package com.estore.service;
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
 import com.estore.dto.response.OrderItemResponseDto;
-import com.estore.dto.response.OrderWithProductsResponseDto;
+import com.estore.dto.response.OrderResponseDto;
 import com.estore.model.Order;
 import com.estore.model.OrderItem;
 import com.estore.repository.OrderItemRepository;
@@ -46,22 +46,22 @@ public class OrderService {
      * @return the saved order without the related entities
      */
     @Transactional
-    public Mono<OrderWithProductsResponseDto> create() {
+    public Mono<OrderResponseDto> create(Long userId) {
         log.info("Start to create order");
-        return orderRepository.save(new Order(null, null, LocalDate.now()))
-                .map(o -> objectMapper.convertValue(o, OrderWithProductsResponseDto.class))
+        return orderRepository.save(new Order(null, userId, LocalDate.now()))
+                .map(o -> objectMapper.convertValue(o, OrderResponseDto.class))
                 .doOnSuccess(o -> log.info("Order id={} have been created", o.getId()));
     }
 
     /**
-     * Add product and quantity an Order by order id
+     * Add product and quantity in Order by order id
      *
      * @param id                  order id
      * @param orderItemRequestDto order item to be saved
-     * @return the saved order item without the related products
+     * @return the saved order item with related products
      */
 
-    public Mono<OrderWithProductsResponseDto> addProductByOrderId(Long id, OrderItemRequestDto orderItemRequestDto) {
+    public Mono<OrderResponseDto> addProductByOrderId(Long id, OrderItemRequestDto orderItemRequestDto) {
         return orderItemService.addProductByOrderId(id, orderItemRequestDto)
                 .then(findById(id));
     }
@@ -73,7 +73,7 @@ public class OrderService {
      * @return Find order with the related products loaded
      * @throws EntityNotFoundException Order with id wasn't found
      */
-    public Mono<OrderWithProductsResponseDto> findById(Long id) {
+    public Mono<OrderResponseDto> findById(Long id) {
         log.info("Start to find order by id={}", id);
         return orderRepository.findById(id)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Order id=" + id + " wasn't found")))
@@ -87,7 +87,7 @@ public class OrderService {
      *
      * @return Find all orders with the related products loaded
      */
-    public Flux<OrderWithProductsResponseDto> findAll() {
+    public Flux<OrderResponseDto> findAll() {
         log.info("Start to find all orders");
         return orderRepository.findAll()
                 .flatMap(this::loadOrderRelations)
@@ -134,7 +134,7 @@ public class OrderService {
      * @return Updated order and its related order items.
      */
     @Transactional
-    public Mono<OrderWithProductsResponseDto> update(Long id, OrderRequestDto orderRequestDto) {
+    public Mono<OrderResponseDto> update(Long id, OrderRequestDto orderRequestDto) {
         log.info("Start to update Order id={}", id);
         List<OrderItemRequestDto> orderItemDtos = orderRequestDto.getProducts();
 
@@ -174,10 +174,10 @@ public class OrderService {
      * @param order Order
      * @return The order with the loaded related products
      */
-    private Mono<OrderWithProductsResponseDto> loadOrderRelations(Order order) {
+    private Mono<OrderResponseDto> loadOrderRelations(Order order) {
         return orderItemService.findAllOrderItemsWithProductsByOrderId(order.getId()).collectList()
                 .map(orderItems -> {
-                    OrderWithProductsResponseDto orderWithProducts = objectMapper.convertValue(order, OrderWithProductsResponseDto.class);
+                    OrderResponseDto orderWithProducts = objectMapper.convertValue(order, OrderResponseDto.class);
                     orderWithProducts.setOrderItems(orderItems);
                     return orderWithProducts;
                 });

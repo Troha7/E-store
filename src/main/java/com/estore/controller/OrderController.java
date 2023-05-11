@@ -2,7 +2,7 @@ package com.estore.controller;
 
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
-import com.estore.dto.response.OrderWithProductsResponseDto;
+import com.estore.dto.response.OrderResponseDto;
 import com.estore.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,44 +28,44 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    @PostMapping
+    @PostMapping("/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new Order")
-    public Mono<OrderWithProductsResponseDto> createOrder() {
-        return orderService.create();
+    public Mono<OrderResponseDto> createOrder(@PathVariable long userId) {
+        return orderService.create(userId);
     }
 
-    @PostMapping("/{orderId}")
+    @PostMapping("/add/{orderId}")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Add product and quantity an Order by order id")
-    public Mono<OrderWithProductsResponseDto> addProduct(@PathVariable long orderId, @RequestBody OrderItemRequestDto orderItem) {
+    @Operation(summary = "Add product and quantity in Order by order id")
+    public Mono<OrderResponseDto> addProduct(@PathVariable long orderId, @RequestBody OrderItemRequestDto orderItem) {
         return orderService.addProductByOrderId(orderId, orderItem);
     }
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update an existing Order")
-    public Mono<OrderWithProductsResponseDto> update(@PathVariable long id, @RequestBody OrderRequestDto order) {
+    public Mono<OrderResponseDto> update(@PathVariable long id, @RequestBody OrderRequestDto order) {
         return orderService.update(id, order);
     }
 
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Find all Orders")
-    public Flux<OrderWithProductsResponseDto> findAll() {
+    public Flux<OrderResponseDto> findAll() {
         return orderService.findAll();
     }
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "Find an Order by id")
-    public Mono<OrderWithProductsResponseDto> findById(@PathVariable("id") long id) {
+    @Operation(summary = "Find Order by id")
+    public Mono<OrderResponseDto> findById(@PathVariable("id") long id) {
         return orderService.findById(id);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete an Order by id")
+    @Operation(summary = "Delete Order by id")
     public Mono<Void> delete(@PathVariable("id") long id) {
         return orderService.deleteById(id);
     }
