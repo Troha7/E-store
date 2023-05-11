@@ -22,9 +22,6 @@ public class User {
     @Id
     private Long id;
 
-    @Column("fk_address_id")
-    private Long addressId;
-
     @Column
     private String name;
 
