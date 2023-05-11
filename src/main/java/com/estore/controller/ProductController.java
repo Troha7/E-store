@@ -37,7 +37,7 @@ public class ProductController {
 
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
-    @Operation(summary = "Find an Product by id")
+    @Operation(summary = "Find Product by id")
     public Mono<ProductResponseDto> getProductById(@PathVariable("id") long id) {
         return productService.findById(id);
     }
@@ -58,7 +58,7 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    @Operation(summary = "Delete an Product by id")
+    @Operation(summary = "Delete Product by id")
     public Mono<Void> deleteProduct(@PathVariable("id") long id) {
         return productService.deleteById(id);
     }
