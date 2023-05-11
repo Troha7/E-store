@@ -20,6 +20,9 @@ public class Address {
     @Id
     private Long id;
 
+    @Column("fk_user_id")
+    private Long userId;
+
     @Column
     private String city;
 
