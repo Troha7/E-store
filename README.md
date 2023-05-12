@@ -23,7 +23,7 @@ In order to build the application you need to have the following software produc
 
 ### Database Entity Diagram
 
-![e_store_SQL](readme_img/e_store_SQL.png)
+![e_store_SQL](readme_img/e_store_SQL_table.png)
 
 ### Exploring the Rest APIs
 
