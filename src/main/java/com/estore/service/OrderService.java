@@ -95,7 +95,7 @@ public class OrderService {
     }
 
     /**
-     * Deletes an order by id.
+     * Deletes order by id.
      * Also deletes all related order items.
      *
      * @param id Order id.
@@ -107,7 +107,6 @@ public class OrderService {
         log.info("Start to delete order by id={}", id);
         return orderRepository.findById(id)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Order id=" + id + " wasn't found")))
-                .flatMap(o -> Mono.zip(Mono.just(o), orderItemRepository.deleteAllByOrderId(id)).thenReturn(o))
                 .flatMap(orderRepository::delete)
                 .doOnSuccess(o -> log.info("Order id={} has been deleted", id));
     }
@@ -121,8 +120,7 @@ public class OrderService {
     @Transactional
     public Mono<Void> deleteAll() {
         log.info("Start to delete all Orders");
-        return orderItemRepository.deleteAll()
-                .then(orderRepository.deleteAll())
+        return orderRepository.deleteAll()
                 .doOnSuccess(o -> log.info("All Orders has been deleted"));
     }
 
@@ -223,7 +221,7 @@ public class OrderService {
                 .filter(addedOrderItem -> !currentOrderItems.contains(addedOrderItem))
                 .toList();
 
-                log.info("OrderItems list for updating {}", addedOrderItems);
+        log.info("OrderItems list for updating {}", addedOrderItems);
         return addedOrderItems;
     }
 
