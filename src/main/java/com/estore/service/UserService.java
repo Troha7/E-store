@@ -67,6 +67,28 @@ public class UserService {
     }
 
     /**
+     * Updates an existing user.
+     *
+     * @param id              User id.
+     * @param userRequestDto  the updated user info.
+     * @return Updated user.
+     * @throws EntityNotFoundException User with id wasn't found.
+     */
+    @Transactional
+    public Mono<UserResponseDto> update(Long id, UserRequestDto userRequestDto) {
+        log.info("Start to update User");
+        return getUserById(id)
+                .map(user -> {
+                    User updatedUser = objectMapper.convertValue(userRequestDto, User.class);
+                    updatedUser.setId(user.getId());
+                    return updatedUser;
+                })
+                .flatMap(userRepository::save)
+                .map(updatedUser -> objectMapper.convertValue(updatedUser, UserResponseDto.class))
+                .doOnSuccess(user -> log.info("User id={} have been updated", user.getId()));
+    }
+
+    /**
      * Find User by id
      *
      * @param id user id
@@ -120,6 +142,35 @@ public class UserService {
         return userRepository.findAll()
                 .flatMap(this::loadAddress)
                 .doOnSubscribe(o -> log.info("All orders have been found"));
+    }
+
+    /**
+     * Deletes User by id.
+     * Also deletes all related address and orders.
+     *
+     * @param id User id.
+     * @return Mono<Void>
+     * @throws EntityNotFoundException if the user is not found.
+     */
+    @Transactional
+    public Mono<Void> deleteById(Long id) {
+        log.info("Start to delete user by id={}", id);
+        return getUserById(id)
+                .flatMap(user -> userRepository.deleteById(user.getId()))
+                .doOnSuccess(o -> log.info("User id={} has been deleted", id));
+    }
+
+    /**
+     * Deletes all Users.
+     * Also deletes all related address and orders.
+     *
+     * @return Mono<Void>
+     */
+    @Transactional
+    public Mono<Void> deleteAll() {
+        log.info("Start to delete all Users");
+        return userRepository.deleteAll()
+                .doOnSuccess(o -> log.info("All Users has been deleted"));
     }
 
     //-----------------------------------

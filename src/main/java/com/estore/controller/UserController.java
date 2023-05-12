@@ -35,6 +35,13 @@ public class UserController {
         return userService.createUser(user);
     }
 
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Update User")
+    public Mono<UserResponseDto> updateUser(@PathVariable("id") long id, @RequestBody UserRequestDto user) {
+        return userService.update(id, user);
+    }
+
     @PostMapping("/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Add user address")
@@ -68,6 +75,13 @@ public class UserController {
     @Operation(summary = "Find all Users")
     public Flux<UserResponseDto> findAll() {
         return userService.findAll();
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Delete User by id")
+    public Mono<Void> delete(@PathVariable("id") long id) {
+        return userService.deleteById(id);
     }
 
 }
