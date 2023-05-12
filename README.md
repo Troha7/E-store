@@ -31,6 +31,7 @@ The server will start at <http://localhost:8080>.
 You can also use the Swagger-UI to test the application.
 
 The Swagger UI will open at : <http://localhost:8080/webjars/swagger-ui/index.html>
+![users](readme_img/Users.png)
 ![products](readme_img/products.png)
 ![orders](readme_img/Orders.png)
 
