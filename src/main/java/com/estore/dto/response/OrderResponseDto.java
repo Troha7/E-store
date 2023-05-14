@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * {@link OrderResponseDto}
@@ -22,6 +23,18 @@ public class OrderResponseDto {
 
     private LocalDate date;
 
-    private List<OrderItemWithProductResponseDto> orderItems;
+    private List<OrderItemResponseDto> orderItems;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        OrderResponseDto that = (OrderResponseDto) o;
+        return date.equals(that.date) && Objects.equals(orderItems, that.orderItems);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(date, orderItems);
+    }
 }
