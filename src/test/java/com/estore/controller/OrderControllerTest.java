@@ -341,7 +341,7 @@ public class OrderControllerTest {
         return orders;
     }
 
-    private void assertOrderListEquals(List<OrderResponseDto> expectedOrders, @NotNull List<OrderResponseDto> actualOrders) {
+    private void assertOrderListEquals(@NotNull List<OrderResponseDto> expectedOrders, @NotNull List<OrderResponseDto> actualOrders) {
         assertEquals(expectedOrders.size(), actualOrders.size());
         IntStream.range(0, actualOrders.size())
                 .forEach(i -> assertOrderEquals(expectedOrders.get(i), actualOrders.get(i)));
