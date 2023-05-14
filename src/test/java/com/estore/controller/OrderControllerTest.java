@@ -3,7 +3,7 @@ package com.estore.controller;
 import com.estore.configuration.TestContainerConfig;
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
-import com.estore.dto.response.OrderItemWithProductResponseDto;
+import com.estore.dto.response.OrderItemResponseDto;
 import com.estore.dto.response.OrderResponseDto;
 import com.estore.model.Product;
 import com.estore.model.User;
@@ -25,7 +25,6 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -115,7 +114,7 @@ public class OrderControllerTest {
                 .expectBodyList(OrderResponseDto.class)
                 .value(orderList -> {
                     assertEquals(ordersNum, orderList.size());
-                    assertOrderListEquals(emptyOrders, orderList);
+                    assertIterableEquals(emptyOrders, orderList);
                 });
     }
 
@@ -129,7 +128,7 @@ public class OrderControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(OrderResponseDto.class)
-                .value(order -> assertOrderEquals(savedOrderWithProducts, order));
+                .value(order -> assertEquals(savedOrderWithProducts, order));
     }
 
     @Test
@@ -159,7 +158,7 @@ public class OrderControllerTest {
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(OrderResponseDto.class)
-                .value(order -> assertOrderEquals(expectedOrder, order));
+                .value(order -> assertEquals(expectedOrder, order));
 
         orderService.findAll()
                 .as(StepVerifier::create)
@@ -174,8 +173,8 @@ public class OrderControllerTest {
         assertNotNull(savedOrder);
         Long id = savedOrder.getId();
 
-        List<OrderItemWithProductResponseDto> addedOrderItemList = List.of(
-                new OrderItemWithProductResponseDto(null, products.get(0), 1));
+        List<OrderItemResponseDto> addedOrderItemList = List.of(
+                new OrderItemResponseDto(null, products.get(0), 1));
         var addedOrderWithProducts = new OrderResponseDto(null, LocalDate.now(), addedOrderItemList);
 
         webTestClient.post().uri(URI.concat("/add/{id}"), id)
@@ -183,7 +182,7 @@ public class OrderControllerTest {
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(OrderResponseDto.class)
-                .value(order -> assertOrderEquals(addedOrderWithProducts, order));
+                .value(order -> assertEquals(addedOrderWithProducts, order));
     }
 
     @Test
@@ -196,8 +195,8 @@ public class OrderControllerTest {
         assert orderWithProducts != null;
         Long id = orderWithProducts.getId();
 
-        List<OrderItemWithProductResponseDto> addedOrderItemList = List.of(
-                new OrderItemWithProductResponseDto(null, products.get(0), 2));
+        List<OrderItemResponseDto> addedOrderItemList = List.of(
+                new OrderItemResponseDto(null, products.get(0), 2));
 
         var addedOrderWithProducts = new OrderResponseDto(null, LocalDate.now(), addedOrderItemList);
 
@@ -206,7 +205,7 @@ public class OrderControllerTest {
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(OrderResponseDto.class)
-                .value(order -> assertOrderEquals(addedOrderWithProducts, order));
+                .value(order -> assertEquals(addedOrderWithProducts, order));
     }
 
     @Test
@@ -248,8 +247,8 @@ public class OrderControllerTest {
         var orderForUpdate = new OrderRequestDto(updatedDate, orderItems.subList(0, 1));
 
 
-        List<OrderItemWithProductResponseDto> updatedOrderItemList = List.of(
-                new OrderItemWithProductResponseDto(null, products.get(0), 1));
+        List<OrderItemResponseDto> updatedOrderItemList = List.of(
+                new OrderItemResponseDto(null, products.get(0), 1));
         var updatedOrderWithProducts = new OrderResponseDto(null, updatedDate, updatedOrderItemList);
 
         webTestClient.put().uri(URI.concat("/{id}"), id)
@@ -257,7 +256,7 @@ public class OrderControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(OrderResponseDto.class)
-                .value(order -> assertOrderEquals(updatedOrderWithProducts, order));
+                .value(order -> assertEquals(updatedOrderWithProducts, order));
     }
 
     @Test
@@ -329,42 +328,13 @@ public class OrderControllerTest {
     }
 
     private @NotNull List<OrderResponseDto> createOrdersWithProducts(int num) {
-        List<OrderResponseDto> orders = new ArrayList<>();
-        for (int i = 0; i < num; i++) {
-            var savedOrderWithProducts = orderService.create(USER_ID)
-                    .flatMap(o -> orderService.addProductByOrderId(o.getId(), orderItems.get(0))
-                            .then(orderService.addProductByOrderId(o.getId(), orderItems.get(1)))
-                            .then(orderService.addProductByOrderId(o.getId(), orderItems.get(2))))
-                    .block();
-            orders.add(savedOrderWithProducts);
-        }
-        return orders;
-    }
-
-    private void assertOrderListEquals(@NotNull List<OrderResponseDto> expectedOrders, @NotNull List<OrderResponseDto> actualOrders) {
-        assertEquals(expectedOrders.size(), actualOrders.size());
-        IntStream.range(0, actualOrders.size())
-                .forEach(i -> assertOrderEquals(expectedOrders.get(i), actualOrders.get(i)));
-    }
-
-    private void assertOrderEquals(@NotNull OrderResponseDto expectedOrder, @NotNull OrderResponseDto actualOrder) {
-        assertEquals(expectedOrder.getDate(), actualOrder.getDate());
-        assertOrderItemListEquals(expectedOrder.getOrderItems(), actualOrder.getOrderItems());
-    }
-
-    private void assertOrderItemListEquals(List<OrderItemWithProductResponseDto> expectedOrderItems, List<OrderItemWithProductResponseDto> actualOrderItems) {
-        if (actualOrderItems == null) {
-            assertNull(expectedOrderItems);
-        } else {
-            assertEquals(expectedOrderItems.size(), actualOrderItems.size());
-            IntStream.range(0, actualOrderItems.size())
-                    .forEach(i -> assertOrderItemEquals(expectedOrderItems.get(i), actualOrderItems.get(i)));
-        }
-    }
-
-    private void assertOrderItemEquals(@NotNull OrderItemWithProductResponseDto expectedOrderItem, @NotNull OrderItemWithProductResponseDto actualOrderItem) {
-        assertEquals(expectedOrderItem.getProduct(), actualOrderItem.getProduct());
-        assertEquals(expectedOrderItem.getQuantity(), actualOrderItem.getQuantity());
+        return IntStream.range(0, num)
+                .mapToObj(i -> orderService.create(USER_ID)
+                        .flatMap(order -> orderService.addProductByOrderId(order.getId(), orderItems.get(0))
+                                .then(orderService.addProductByOrderId(order.getId(), orderItems.get(1)))
+                                .then(orderService.addProductByOrderId(order.getId(), orderItems.get(2))))
+                        .block())
+                .toList();
     }
 
 }

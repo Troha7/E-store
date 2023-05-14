@@ -18,10 +18,8 @@ import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.stream.IntStream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This class {@link ProductControllerTest} provides integration tests for the {@link ProductController} class,
@@ -94,7 +92,7 @@ public class ProductControllerTest {
                 .expectBodyList(ProductResponseDto.class)
                 .value(productList -> {
                     assertEquals(3, productList.size());
-                    assertProductListsEquals(savedProducts, productList);
+                    assertIterableEquals(savedProducts, productList);
                 });
     }
 
@@ -110,7 +108,7 @@ public class ProductControllerTest {
                 .expectBodyList(ProductResponseDto.class)
                 .value(productList -> {
                     assertEquals(1, productList.size());
-                    assertProductListsEquals(savedProducts.subList(2, 3), productList);
+                    assertIterableEquals(savedProducts.subList(2, 3), productList);
                 });
     }
 
@@ -138,7 +136,7 @@ public class ProductControllerTest {
                 .expectBodyList(ProductResponseDto.class)
                 .value(productList -> {
                     assertEquals(1, productList.size());
-                    assertProductListsEquals(savedProducts.subList(0, 1), productList);
+                    assertIterableEquals(savedProducts.subList(0, 1), productList);
                 });
     }
 
@@ -166,7 +164,7 @@ public class ProductControllerTest {
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(ProductResponseDto.class)
-                .value(product -> assertProductEquals(savedProduct, product));
+                .value(product -> assertEquals(savedProduct, product));
 
         productService.findAll()
                 .as(StepVerifier::create)
@@ -203,7 +201,7 @@ public class ProductControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ProductResponseDto.class)
-                .value(product -> assertProductEquals(updatedProduct, product));
+                .value(product -> assertEquals(updatedProduct, product));
 
         productService.findAll()
                 .as(StepVerifier::create)
@@ -277,17 +275,6 @@ public class ProductControllerTest {
         return productList.stream()
                 .map(p -> productService.create(p).block())
                 .toList();
-    }
-
-    private void assertProductListsEquals(List<ProductResponseDto> expectedProducts, List<ProductResponseDto> actualProducts) {
-        IntStream.range(0, actualProducts.size())
-                .forEach(i -> assertProductEquals(expectedProducts.get(i), actualProducts.get(i)));
-    }
-
-    private void assertProductEquals(ProductResponseDto expectedProduct, ProductResponseDto actualProduct) {
-        assertEquals(expectedProduct.getName(), actualProduct.getName());
-        assertEquals(expectedProduct.getDescription(), actualProduct.getDescription());
-        assertEquals(expectedProduct.getPrice(), actualProduct.getPrice());
     }
 
 }
