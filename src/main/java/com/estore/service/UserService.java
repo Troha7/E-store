@@ -58,9 +58,9 @@ public class UserService {
         log.info("Start to addAddress by userId={}", userId);
         return getUserById(userId)
                 .map(user -> objectMapper.convertValue(user, UserResponseDto.class))
-                .flatMap(user -> updateAddress(userId, addressRequestDto)
-                        .map(updatedAddress -> {
-                            user.setAddress(updatedAddress);
+                .flatMap(user -> saveAddress(userId, addressRequestDto)
+                        .map(savedAddress -> {
+                            user.setAddress(savedAddress);
                             return user;
                         }))
                 .doOnSuccess(user -> log.info("Address has been added to User id={}", userId));
@@ -173,6 +173,22 @@ public class UserService {
                 .doOnSuccess(o -> log.info("All Users has been deleted"));
     }
 
+    /**
+     * Find Address by user id
+     *
+     * @param id user id
+     * @return User address
+     * @throws EntityNotFoundException Address with id wasn't found
+     */
+    public Mono<AddressResponseDto> findAddressByUserId(Long id) {
+        log.info("Start to find Address by userId");
+        return addressRepository.findByUserId(id)
+                .switchIfEmpty(Mono.error(new EntityNotFoundException("Address with userId=" + id + " wasn't found")))
+                .map(address -> objectMapper.convertValue(address, AddressResponseDto.class))
+                .doOnError(user -> log.warn("Address with userId=" + id + " wasn't found"))
+                .doOnSuccess(o -> log.info("Address by userId has been found"));
+    }
+
     //-----------------------------------
     //         Private methods
     //-----------------------------------
@@ -187,7 +203,7 @@ public class UserService {
     }
 
     private Mono<UserResponseDto> loadAddress(User user) {
-        return findByUserId(user.getId())
+        return findAddressByUserId(user.getId())
                 .map(addressDto -> {
                     var userDto = objectMapper.convertValue(user, UserResponseDto.class);
                     userDto.setAddress(addressDto);
@@ -195,27 +211,23 @@ public class UserService {
                 });
     }
 
-    private Mono<AddressResponseDto> findByUserId(Long id) {
-        return addressRepository.findByUserId(id)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Address with userId=" + id + " wasn't found")))
-                .map(address -> objectMapper.convertValue(address, AddressResponseDto.class))
-                .doOnError(user -> log.warn("Address with userId=" + id + " wasn't found"));
-    }
-
-    private Mono<AddressResponseDto> updateAddress(Long userId, AddressRequestDto addressRequestDto) {
+    private Mono<AddressResponseDto> saveAddress(Long userId, AddressRequestDto addressRequestDto) {
 
         Address newAddress = objectMapper.convertValue(addressRequestDto, Address.class);
+        newAddress.setUserId(userId);
         return addressRepository.findByUserId(userId)
-                .switchIfEmpty(Mono.defer(() -> addressRepository.save(newAddress)
-                        .doOnSuccess(address -> log.info("New Address id={} was created", address.getId()))))
+                .switchIfEmpty(Mono.just(newAddress))
                 .map(address -> {
-                    newAddress.setId(address.getId());
-                    newAddress.setUserId(userId);
+                    if(address.getId() != null) {
+                        newAddress.setId(address.getId());
+                        log.info("Address {} was updated", address);
+                    }else {
+                        log.info("New Address {} was created", address);
+                    }
                     return address;
                 })
                 .flatMap(address -> addressRepository.save(newAddress))
-                .map(address -> objectMapper.convertValue(address, AddressResponseDto.class))
-                .doOnSuccess(address -> log.info("Address id={} was updated", address.getId()));
+                .map(address -> objectMapper.convertValue(address, AddressResponseDto.class));
     }
 
     private Mono<User> getUserById(Long id) {
