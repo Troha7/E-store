@@ -2,9 +2,9 @@ package com.estore.service;
 
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.response.OrderItemResponseDto;
-import com.estore.dto.response.OrderItemWithProductResponseDto;
 import com.estore.model.OrderItem;
 import com.estore.repository.OrderItemRepository;
+import com.estore.repository.ProductRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +29,8 @@ public class OrderItemService {
 
     private final OrderItemRepository orderItemRepository;
 
+    private final ProductRepository productRepository;
+
     private final ObjectMapper objectMapper;
 
     /**
@@ -38,10 +40,10 @@ public class OrderItemService {
      * @return OrderItemWithProductResponseDto objects containing order item and product information
      */
 
-    public Flux<OrderItemWithProductResponseDto> findAllOrderItemsWithProductsByOrderId(Long id) {
+    public Flux<OrderItemResponseDto> findAllOrderItemsWithProductsByOrderId(Long id) {
 
         return orderItemRepository.findAllByOrderId(id)
-                .map(o -> objectMapper.convertValue(o, OrderItemWithProductResponseDto.class))
+                .map(o -> objectMapper.convertValue(o, OrderItemResponseDto.class))
                 .zipWith(orderItemRepository.findProductsByOrderId(id))
                 .map(result -> {
                     result.getT1().setProduct(result.getT2());
@@ -82,9 +84,13 @@ public class OrderItemService {
                                         existingOrderItem.getQuantity(), orderItemRequestDto.getQuantity());
                             }
 
-                            return orderItemRepository
-                                    .save(orderItem)
-                                    .map(savedOrderItem -> objectMapper.convertValue(savedOrderItem, OrderItemResponseDto.class))
+                            return orderItemRepository.save(orderItem)
+                                    .flatMap(savedOrderItem -> productRepository.findById(savedOrderItem.getProductId())
+                                            .map(product -> {
+                                                var orderItemWithProduct = objectMapper.convertValue(savedOrderItem, OrderItemResponseDto.class);
+                                                orderItemWithProduct.setProduct(product);
+                                                return orderItemWithProduct;
+                                            }))
                                     .doOnSuccess(savedOrderItem -> log.info("Product has been added"));
                         }));
     }

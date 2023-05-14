@@ -2,7 +2,6 @@ package com.estore.service;
 
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
-import com.estore.dto.response.OrderItemResponseDto;
 import com.estore.dto.response.OrderResponseDto;
 import com.estore.model.Order;
 import com.estore.model.OrderItem;
@@ -151,8 +150,6 @@ public class OrderService {
 
                                 // Insert all Order Items which will be updated
                                 .thenMany(orderItemRepository.saveAll(getAddedOrderItems(id, orderItemDtos, currentOrderItems)))
-                                .map(o -> objectMapper.convertValue(o, OrderItemResponseDto.class))
-                                .collectList()
 
                                 // Update the Order
                                 .then(saveOrderById(id, orderRequestDto))
