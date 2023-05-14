@@ -41,4 +41,6 @@ ProductController tests result:
 ![Product_tests](readme_img/Product_tests.png)
 OrderController tests result:
 ![Order_tests](readme_img/Order_tests.png)
+UserController tests result:
+![User_tests](readme_img/User_tests.png)
 
