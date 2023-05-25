@@ -18,7 +18,6 @@ import java.time.LocalDate;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("e_store.order")
 public class Order {
 
     @Id

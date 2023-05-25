@@ -1,9 +1,7 @@
 package com.estore.dto.response;
 
 import com.estore.model.Product;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Objects;
 
@@ -13,7 +11,9 @@ import java.util.Objects;
  * @author Dmytro Trotsenko on 3/9/23
  */
 
-@Data
+
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class OrderItemResponseDto {

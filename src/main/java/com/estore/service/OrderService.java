@@ -59,7 +59,6 @@ public class OrderService {
      * @param orderItemRequestDto order item to be saved
      * @return the saved order item with related products
      */
-
     public Mono<OrderResponseDto> addProductByOrderId(Long id, OrderItemRequestDto orderItemRequestDto) {
         return orderItemService.addProductByOrderId(id, orderItemRequestDto)
                 .then(findById(id));
@@ -135,6 +134,7 @@ public class OrderService {
         log.info("Start to update Order id={}", id);
         List<OrderItemRequestDto> orderItemDtos = orderRequestDto.getProducts();
 
+        // FIXME Validation in DTO
         // Validate OrderItems
         validateOrderItems(orderItemDtos);
 
@@ -158,6 +158,8 @@ public class OrderService {
                 .doOnSuccess(o -> log.info("Order has been updated"));
     }
 
+
+    // FIXME move to OrderItemService
     private Mono<List<OrderItem>> getCurrentOrderItems(Long id) {
         return orderItemRepository.findAllByOrderId(id).collectList();
     }
@@ -203,6 +205,8 @@ public class OrderService {
      * @param currentOrderItems current OrderItems
      * @return list for add OrderItems from repository
      */
+
+    // FIXME move to OrderItemService
     private List<OrderItem> getAddedOrderItems(Long id, List<OrderItemRequestDto> orderItems, List<OrderItem> currentOrderItems) {
         List<OrderItem> addedOrderItems = IntStream.range(0, orderItems.size())
                 .mapToObj(i -> {
@@ -229,6 +233,7 @@ public class OrderService {
      * @param currentOrderItems current OrderItems
      * @return list for remove OrderItems from repository
      */
+    // FIXME move to OrderItemService
     private static List<OrderItem> getRemovedOrderItems(List<OrderItemRequestDto> orderItems, List<OrderItem> currentOrderItems) {
         int skippedOrderItems = Math.min(currentOrderItems.size(), orderItems.size());
 
@@ -248,6 +253,7 @@ public class OrderService {
      * @throws IllegalArgumentException If there are duplicate product IDs or
      *                                  the quantity of any item is less than or equal to 0.
      */
+    // FIXME move to OrderItemService
     private void validateOrderItems(List<OrderItemRequestDto> orderItemDtos) {
         Set<Long> productIds = new HashSet<>();
 

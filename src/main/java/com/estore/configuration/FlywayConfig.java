@@ -4,6 +4,12 @@ import org.flywaydb.core.Flyway;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.RouterFunctions;
+import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Mono;
+
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 
 @Configuration
 public class FlywayConfig {
@@ -24,5 +30,12 @@ public class FlywayConfig {
                         env.getRequiredProperty("spring.flyway.password"))
                 .cleanDisabled(env.containsProperty("spring.flyway.cleanDisabled"))
         );
+    }
+
+
+    @Bean
+    public RouterFunction<ServerResponse> route() {
+        return RouterFunctions.route(GET("/hello"), request ->
+                ServerResponse.ok().body(Mono.just("Hello, World!"), String.class));
     }
 }

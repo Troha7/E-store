@@ -20,8 +20,11 @@ public interface OrderItemRepository extends ReactiveCrudRepository<OrderItem, L
 
     Flux<OrderItem> findAllByOrderId(Long id);
 
+    //FIXME unused method
     Mono<Void> deleteAllByOrderId(Long id);
 
+
+    //FIXME return products in OrderItemRepo
     @Query("SELECT * " +
             "FROM e_store.product p " +
             "JOIN e_store.order_item oi ON p.id = oi.fk_product_id " +
@@ -31,6 +34,10 @@ public interface OrderItemRepository extends ReactiveCrudRepository<OrderItem, L
     @Query("SELECT o.id > 0 AND p.id > 0 " +
             "FROM e_store.product p, e_store.order o " +
             "WHERE  o.id=:order_id AND p.id=:prod_id;")
+// FIXME @Query("""
+//            SELECT COUNT(*) > 0
+//            FROM order_item
+//            WHERE fk_order_id = :orderId AND fk_product_id = :productId""")
     Mono<Boolean> existByOrderIdAndProductId(Long orderId, Long productId);
 
 }

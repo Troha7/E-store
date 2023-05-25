@@ -6,6 +6,7 @@ import com.estore.dto.response.OrderResponseDto;
 import com.estore.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -45,7 +46,8 @@ public class OrderController {
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update an existing Order")
-    public Mono<OrderResponseDto> update(@PathVariable long id, @RequestBody OrderRequestDto order) {
+    public Mono<OrderResponseDto> update(@PathVariable long id,
+                                         @Valid @RequestBody OrderRequestDto order) {
         return orderService.update(id, order);
     }
 

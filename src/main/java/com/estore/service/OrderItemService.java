@@ -39,7 +39,6 @@ public class OrderItemService {
      * @param id Order id.
      * @return OrderItemWithProductResponseDto objects containing order item and product information
      */
-
     public Flux<OrderItemResponseDto> findAllOrderItemsWithProductsByOrderId(Long id) {
 
         return orderItemRepository.findAllByOrderId(id)
@@ -51,7 +50,6 @@ public class OrderItemService {
                 });
     }
 
-
     /**
      * Add a product to the order by order id.
      *
@@ -61,10 +59,11 @@ public class OrderItemService {
      */
     @Transactional
     public Mono<OrderItemResponseDto> addProductByOrderId(Long orderId, OrderItemRequestDto orderItemRequestDto) {
-        log.info("Start to addProduct {}", orderItemRequestDto);
+        log.debug("Start to addProduct {}", orderItemRequestDto); // FIXME debug lvl
         // Check that the quantity is valid.
+        // FIXME validation in DTO class on Controller layer
         if (orderItemRequestDto.getQuantity() <= 0) {
-            log.warn("Quantity <= 0");
+            log.warn("Quantity <= 0"); // FIXME error lvl
             return Mono.error(new IllegalArgumentException("Quantity must be greater than 0"));
         }
 
