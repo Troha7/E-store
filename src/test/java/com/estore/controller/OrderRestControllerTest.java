@@ -1,12 +1,13 @@
 package com.estore.controller;
 
 import com.estore.configuration.TestContainerConfig;
+import com.estore.controller.api.OrderRestController;
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
 import com.estore.dto.response.OrderItemResponseDto;
 import com.estore.dto.response.OrderResponseDto;
 import com.estore.model.Product;
-import com.estore.model.User;
+import com.estore.model.UserEntity;
 import com.estore.repository.ProductRepository;
 import com.estore.repository.UserRepository;
 import com.estore.service.OrderService;
@@ -28,10 +29,11 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import static com.estore.model.UserRole.USER;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * This class {@link OrderControllerTest} provides integration tests for the {@link OrderController} class,
+ * This class {@link OrderRestControllerTest} provides integration tests for the {@link OrderRestController} class,
  * testing its API endpoints.
  * <p>The tests are performed using a test container with a PostgreSQL database.</p>
  * <p>{@link TestContainerConfig} is the class for test container configuration.</p>
@@ -41,7 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith(TestContainerConfig.class)
-public class OrderControllerTest {
+public class OrderRestControllerTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -145,12 +147,13 @@ public class OrderControllerTest {
 
     @Test
     void shouldCreatedNewOrder() {
-        var user = new User(null, "User", "user@gmail.com", "+380999999999", "password");
-        User newUser = userRepository.save(user)
+        var user = new UserEntity(null, "User1", "1234", USER, "First", "Last","user1@gmail.com", "+380991111111");
+
+        UserEntity newUserEntity = userRepository.save(user)
                 .block();
 
-        assert newUser != null;
-        Long userId = newUser.getId();
+        assert newUserEntity != null;
+        Long userId = newUserEntity.getId();
 
         var expectedOrder = new OrderResponseDto(null, LocalDate.now(), null);
 

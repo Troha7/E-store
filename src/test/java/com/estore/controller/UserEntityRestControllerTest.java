@@ -1,6 +1,7 @@
 package com.estore.controller;
 
 import com.estore.configuration.TestContainerConfig;
+import com.estore.controller.api.UserRestController;
 import com.estore.dto.request.AddressRequestDto;
 import com.estore.dto.request.UserRequestDto;
 import com.estore.dto.response.AddressResponseDto;
@@ -23,10 +24,11 @@ import reactor.test.StepVerifier;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import static com.estore.model.UserRole.USER;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * This class {@link UserControllerTest} provides integration tests for the {@link UserController} class,
+ * This class {@link UserEntityRestControllerTest} provides integration tests for the {@link UserRestController} class,
  * testing its API endpoints.
  * <p>The tests are performed using a test container with a PostgreSQL database.</p>
  * <p>{@link TestContainerConfig} is the class for test container configuration.</p>
@@ -36,7 +38,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith(TestContainerConfig.class)
-public class UserControllerTest {
+public class UserEntityRestControllerTest {
 
     @Autowired
     private UserService userService;
@@ -53,9 +55,9 @@ public class UserControllerTest {
     private final Long NOT_EXISTED_USER_ID = 100L;
 
     private final List<UserRequestDto> users = List.of(
-            new UserRequestDto("User1", "user1@gmail.com", "+380991111111", "1234"),
-            new UserRequestDto("User2", "user2@gmail.com", "+380992222222", "4321"),
-            new UserRequestDto("User3", "user3@gmail.com", "+380993333333", "2431")
+            new UserRequestDto("User1",  "1234", USER, "First1", "Last1", "user1@gmail.com", "+380991111111"),
+            new UserRequestDto("User2", "1594", USER, "First2", "Last2", "user2@gmail.com", "+380992222222"),
+            new UserRequestDto("User3", "0031", USER, "First3", "Last3", "user3@gmail.com", "+380993333333")
     );
 
     private final List<AddressRequestDto> addresses = List.of(
@@ -146,12 +148,20 @@ public class UserControllerTest {
     //-----------------------------------
 
     @Test
-    void shouldCreatedNewOrder() {
+    void shouldCreatedNewUser() {
 
-        var expectedUser = new UserResponseDto(null, "User1", "user1@gmail.com", "+380991111111", "1234", null, null);
+        var newUser = users.get(0);
+
+        var expectedUser = new UserResponseDto();
+        expectedUser.setUsername(newUser.getUsername());
+        expectedUser.setPassword(newUser.getPassword());
+        expectedUser.setFirstName(newUser.getFirstName());
+        expectedUser.setLastName(newUser.getLastName());
+        expectedUser.setEmail(newUser.getEmail());
+        expectedUser.setPhone(newUser.getPhone());
 
         webTestClient.post().uri(URI)
-                .bodyValue(users.get(0))
+                .bodyValue(newUser)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(UserResponseDto.class)
@@ -213,10 +223,12 @@ public class UserControllerTest {
 
         var updatedUser = users.get(2);
 
-        expectedUser.setName(updatedUser.getName());
+        expectedUser.setUsername(updatedUser.getUsername());
+        expectedUser.setPassword(updatedUser.getPassword());
+        expectedUser.setFirstName(updatedUser.getFirstName());
+        expectedUser.setLastName(updatedUser.getLastName());
         expectedUser.setEmail(updatedUser.getEmail());
         expectedUser.setPhone(updatedUser.getPhone());
-        expectedUser.setPassword(updatedUser.getPassword());
 
         webTestClient.put().uri(URI.concat("/{id}"), id)
                 .bodyValue(updatedUser)
