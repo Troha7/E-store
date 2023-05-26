@@ -5,7 +5,7 @@ import com.estore.dto.request.UserRequestDto;
 import com.estore.dto.response.AddressResponseDto;
 import com.estore.dto.response.UserResponseDto;
 import com.estore.model.Address;
-import com.estore.model.User;
+import com.estore.model.UserEntity;
 import com.estore.repository.AddressRepository;
 import com.estore.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,9 +40,9 @@ public class UserService {
     @Transactional
     public Mono<UserResponseDto> createUser(UserRequestDto userRequestDto) {
         log.info("Start to create User");
-        User newUser = objectMapper.convertValue(userRequestDto, User.class);
-        return userRepository.save(newUser)
-                .map(user -> objectMapper.convertValue(user, UserResponseDto.class))
+        UserEntity newUserEntity = objectMapper.convertValue(userRequestDto, UserEntity.class);
+        return userRepository.save(newUserEntity)
+                .map(userEntity -> objectMapper.convertValue(userEntity, UserResponseDto.class))
                 .doOnSuccess(user -> log.info("User id={} have been created", user.getId()));
     }
 
@@ -57,7 +57,7 @@ public class UserService {
     public Mono<UserResponseDto> addAddress(Long userId, AddressRequestDto addressRequestDto) {
         log.info("Start to addAddress by userId={}", userId);
         return getUserById(userId)
-                .map(user -> objectMapper.convertValue(user, UserResponseDto.class))
+                .map(userEntity -> objectMapper.convertValue(userEntity, UserResponseDto.class))
                 .flatMap(user -> saveAddress(userId, addressRequestDto)
                         .map(savedAddress -> {
                             user.setAddress(savedAddress);
@@ -78,13 +78,13 @@ public class UserService {
     public Mono<UserResponseDto> update(Long id, UserRequestDto userRequestDto) {
         log.info("Start to update User");
         return getUserById(id)
-                .map(user -> {
-                    User updatedUser = objectMapper.convertValue(userRequestDto, User.class);
-                    updatedUser.setId(user.getId());
-                    return updatedUser;
+                .map(userEntity -> {
+                    UserEntity updatedUserEntity = objectMapper.convertValue(userRequestDto, UserEntity.class);
+                    updatedUserEntity.setId(userEntity.getId());
+                    return updatedUserEntity;
                 })
                 .flatMap(userRepository::save)
-                .map(updatedUser -> objectMapper.convertValue(updatedUser, UserResponseDto.class))
+                .map(updatedUserEntity -> objectMapper.convertValue(updatedUserEntity, UserResponseDto.class))
                 .doOnSuccess(user -> log.info("User id={} have been updated", user.getId()));
     }
 
@@ -112,7 +112,7 @@ public class UserService {
     public Mono<UserResponseDto> findUserOrdersHistoryById(Long id) {
         log.info("Start to find User with OrdersHistory By userId={}", id);
         return getUserById(id)
-                .map(user -> objectMapper.convertValue(user, UserResponseDto.class))
+                .map(userEntity -> objectMapper.convertValue(userEntity, UserResponseDto.class))
                 .flatMap(this::loadOrdersHistory)
                 .doOnSuccess(user -> log.info("User id={} with OrdersHistory have been found", user.getId()));
     }
@@ -127,7 +127,7 @@ public class UserService {
     public Mono<UserResponseDto> findFullUserInfoById(Long id) {
         log.info("Start to find full User info by id={}", id);
         return getUserById(id)
-                .flatMap(user -> loadAddress(user)
+                .flatMap(userEntity -> loadAddress(userEntity)
                         .flatMap(this::loadOrdersHistory))
                 .doOnSuccess(user -> log.info("Full User info by id={} have been found", user.getId()));
     }
@@ -156,7 +156,7 @@ public class UserService {
     public Mono<Void> deleteById(Long id) {
         log.info("Start to delete user by id={}", id);
         return getUserById(id)
-                .flatMap(user -> userRepository.deleteById(user.getId()))
+                .flatMap(userEntity -> userRepository.deleteById(userEntity.getId()))
                 .doOnSuccess(o -> log.info("User id={} has been deleted", id));
     }
 
@@ -202,10 +202,10 @@ public class UserService {
                 });
     }
 
-    private Mono<UserResponseDto> loadAddress(User user) {
-        return findAddressByUserId(user.getId())
+    private Mono<UserResponseDto> loadAddress(UserEntity userEntity) {
+        return findAddressByUserId(userEntity.getId())
                 .map(addressDto -> {
-                    var userDto = objectMapper.convertValue(user, UserResponseDto.class);
+                    var userDto = objectMapper.convertValue(userEntity, UserResponseDto.class);
                     userDto.setAddress(addressDto);
                     return userDto;
                 });
@@ -230,7 +230,7 @@ public class UserService {
                 .map(address -> objectMapper.convertValue(address, AddressResponseDto.class));
     }
 
-    private Mono<User> getUserById(Long id) {
+    private Mono<UserEntity> getUserById(Long id) {
         return userRepository.findById(id)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("User id=" + id + " wasn't found")))
                 .doOnError(user -> log.warn("User id=" + id + " wasn't found"));
