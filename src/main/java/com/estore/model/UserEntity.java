@@ -8,7 +8,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 
 /**
- * {@link User}
+ * {@link UserEntity}
  *
  * @author Dmytro Trotsenko on 3/9/23
  */
@@ -17,13 +17,25 @@ import org.springframework.data.relational.core.mapping.Table;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table("e_store.user")
-public class User {
+public class UserEntity {
 
     @Id
     private Long id;
 
     @Column
-    private String name;
+    private String username;
+
+    @Column
+    private String password;
+
+    @Column
+    private UserRole role;
+
+    @Column("first_name")
+    private String firstName;
+
+    @Column("last_name")
+    private String lastName;
 
     @Column
     private String email;
@@ -31,7 +43,9 @@ public class User {
     @Column
     private String phone;
 
-    @Column
-    private String password;
+    @ToString.Include(name = "password")
+    private String hidePassword() {
+        return "*****";
+    }
 
 }
