@@ -1,5 +1,6 @@
 package com.estore.dto.response;
 
+import com.estore.model.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,13 +21,19 @@ public class UserResponseDto {
 
     private Long id;
 
-    private String name;
+    private String username;
+
+    private String password;
+
+    private UserRole role;
+
+    private String firstName;
+
+    private String lastName;
 
     private String email;
 
     private String phone;
-
-    private String password;
 
     private AddressResponseDto address;
 
@@ -37,11 +44,11 @@ public class UserResponseDto {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         UserResponseDto that = (UserResponseDto) o;
-        return name.equals(that.name) && email.equals(that.email) && phone.equals(that.phone) && password.equals(that.password) && Objects.equals(address, that.address) && Objects.equals(ordersHistory, that.ordersHistory);
+        return username.equals(that.username) && password.equals(that.password) && role == that.role && firstName.equals(that.firstName) && lastName.equals(that.lastName) && email.equals(that.email) && phone.equals(that.phone) && Objects.equals(address, that.address) && Objects.equals(ordersHistory, that.ordersHistory);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(name, email, phone, password, address, ordersHistory);
+        return Objects.hash(username, password, role, firstName, lastName, email, phone, address, ordersHistory);
     }
 }

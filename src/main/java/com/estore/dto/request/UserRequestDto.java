@@ -1,5 +1,6 @@
 package com.estore.dto.request;
 
+import com.estore.model.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,12 +16,18 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserRequestDto {
 
-    private String name;
+    private String username;
+
+    private String password;
+
+    private UserRole role;
+
+    private String firstName;
+
+    private String lastName;
 
     private String email;
 
     private String phone;
-
-    private String password;
 
 }
