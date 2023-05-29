@@ -24,9 +24,19 @@ public interface ProductRepository extends ReactiveCrudRepository<Product, Long>
 
     Flux<Product> findByNameContaining(String name);
 
-    @Query("SELECT COUNT(*) = :list_size " +
-            "FROM e_store.product p " +
-            "WHERE p.id IN (:list) ")
+    @Query("""
+            SELECT *
+            FROM e_store.product p
+            JOIN e_store.order_item oi ON p.id = oi.fk_product_id
+            WHERE oi.fk_order_id = :order_id;
+            """)
+    Flux<Product> findProductsByOrderId(Long orderId);
+
+    @Query("""
+            SELECT COUNT(*) = :list_size
+            FROM e_store.product p
+            WHERE p.id IN (:list);
+            """)
     Mono<Boolean> existsProductByIdIn(@Param("list") List<Long> productIds, @Param("list_size") int listSize);
 
 }
