@@ -17,9 +17,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.IntStream;
 
 /**
@@ -135,14 +133,11 @@ public class OrderService {
         log.info("Start to update Order id={}", id);
         List<OrderItemRequestDto> orderItemDtos = orderRequestDto.getProducts();
 
-        // Validate OrderItems
-        validateOrderItems(orderItemDtos);
-
         return existsOrderById(id)
                 .then(existsProductsInList(orderItemDtos))
 
                 // Find the existing links to the Products
-                .then(getCurrentOrderItems(id))
+                .then(orderItemRepository.findAllByOrderId(id).collectList())
                 .flatMap(currentOrderItems ->
 
                         // Delete all Order Items which will not be updated
@@ -158,10 +153,9 @@ public class OrderService {
                 .doOnSuccess(o -> log.info("Order has been updated"));
     }
 
-    private Mono<List<OrderItem>> getCurrentOrderItems(Long id) {
-        return orderItemRepository.findAllByOrderId(id).collectList();
-    }
-
+    //-----------------------------------
+    //         Private methods
+    //-----------------------------------
 
     /**
      * Load the products related to an order
@@ -238,27 +232,6 @@ public class OrderService {
 
         log.info("OrderItems list for deleting {}", removedOrderItems);
         return removedOrderItems;
-    }
-
-    /**
-     * Validates the order items, checks if there are no duplicate product IDs
-     * and if the quantity of each item is greater than 0.
-     *
-     * @param orderItemDtos List of OrderItemRequestDto.
-     * @throws IllegalArgumentException If there are duplicate product IDs or
-     *                                  the quantity of any item is less than or equal to 0.
-     */
-    private void validateOrderItems(List<OrderItemRequestDto> orderItemDtos) {
-        Set<Long> productIds = new HashSet<>();
-
-        for (OrderItemRequestDto orderItemDto : orderItemDtos) {
-            if (!productIds.add(orderItemDto.getProductId())) {
-                throw new IllegalArgumentException("Order has duplicate productId=" + orderItemDto.getProductId());
-            }
-            if (orderItemDto.getQuantity() <= 0) {
-                throw new IllegalArgumentException("Quantity <= 0");
-            }
-        }
     }
 
     /**
