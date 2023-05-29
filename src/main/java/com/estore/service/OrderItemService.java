@@ -44,7 +44,7 @@ public class OrderItemService {
 
         return orderItemRepository.findAllByOrderId(id)
                 .map(o -> objectMapper.convertValue(o, OrderItemResponseDto.class))
-                .zipWith(orderItemRepository.findProductsByOrderId(id))
+                .zipWith(productRepository.findProductsByOrderId(id))
                 .map(result -> {
                     result.getT1().setProduct(result.getT2());
                     return result.getT1();
@@ -62,11 +62,6 @@ public class OrderItemService {
     @Transactional
     public Mono<OrderItemResponseDto> addProductByOrderId(Long orderId, OrderItemRequestDto orderItemRequestDto) {
         log.info("Start to addProduct {}", orderItemRequestDto);
-        // Check that the quantity is valid.
-        if (orderItemRequestDto.getQuantity() <= 0) {
-            log.warn("Quantity <= 0");
-            return Mono.error(new IllegalArgumentException("Quantity must be greater than 0"));
-        }
 
         return checkExistOrderAndProduct(orderId, orderItemRequestDto)
                 .then(orderItemRepository.findAllByOrderId(orderId)
