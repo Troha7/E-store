@@ -136,6 +136,12 @@ public class ProductService {
                 .doOnSuccess(p -> log.info("All products have been deleted"));
     }
 
+    /**
+     * Check availability of Products by id list
+     *
+     * @param productIds id list
+     * @return True if all ids exist in the repository
+     */
     public Mono<Boolean> existsProductByIdIn(List<Long> productIds) {
         return productRepository.existsProductByIdIn(productIds, productIds.size());
     }
