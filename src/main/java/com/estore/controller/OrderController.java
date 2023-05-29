@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -38,14 +39,14 @@ public class OrderController {
     @PostMapping("/add/{orderId}")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Add product and quantity in Order by order id")
-    public Mono<OrderResponseDto> addProduct(@PathVariable long orderId, @RequestBody OrderItemRequestDto orderItem) {
+    public Mono<OrderResponseDto> addProduct(@PathVariable long orderId, @Validated @RequestBody OrderItemRequestDto orderItem) {
         return orderService.addProductByOrderId(orderId, orderItem);
     }
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update an existing Order")
-    public Mono<OrderResponseDto> update(@PathVariable long id, @RequestBody OrderRequestDto order) {
+    public Mono<OrderResponseDto> update(@PathVariable long id, @Validated @RequestBody OrderRequestDto order) {
         return orderService.update(id, order);
     }
 

@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -31,21 +32,21 @@ public class UserController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new User")
-    public Mono<UserResponseDto> createUser(@RequestBody UserRequestDto user) {
+    public Mono<UserResponseDto> createUser(@Validated @RequestBody UserRequestDto user) {
         return userService.createUser(user);
     }
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update User")
-    public Mono<UserResponseDto> updateUser(@PathVariable("id") long id, @RequestBody UserRequestDto user) {
+    public Mono<UserResponseDto> updateUser(@PathVariable("id") long id, @Validated @RequestBody UserRequestDto user) {
         return userService.update(id, user);
     }
 
     @PostMapping("/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Add user address")
-    public Mono<UserResponseDto> addAddress(@PathVariable("userId") long userId, @RequestBody AddressRequestDto addressRequestDto) {
+    public Mono<UserResponseDto> addAddress(@PathVariable("userId") long userId, @Validated @RequestBody AddressRequestDto addressRequestDto) {
         return userService.addAddress(userId, addressRequestDto);
     }
 
