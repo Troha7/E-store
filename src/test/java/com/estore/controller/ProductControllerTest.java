@@ -156,7 +156,7 @@ public class ProductControllerTest {
 
     @Test
     void shouldCreatedNewProduct() {
-        var newProduct = new ProductRequestDto("newProduct", "new", BigDecimal.ZERO);
+        var newProduct = new ProductRequestDto("newProduct", "new", BigDecimal.ONE);
         var savedProduct = objectMapper.convertValue(newProduct, ProductResponseDto.class);
 
         webTestClient.post().uri(URI)
@@ -192,7 +192,7 @@ public class ProductControllerTest {
     void shouldUpdatedExistingProduct() {
 
         List<ProductResponseDto> savedProducts = saveToRepository(products);
-        var productForUpdate = new ProductRequestDto("updateProduct", "update", BigDecimal.ZERO);
+        var productForUpdate = new ProductRequestDto("updateProduct", "update", BigDecimal.ONE);
         var updatedProduct = objectMapper.convertValue(productForUpdate, ProductResponseDto.class);
         Long id = savedProducts.get(0).getId();
 
@@ -213,7 +213,7 @@ public class ProductControllerTest {
     void shouldThrowExceptionIfUpdatedProductIdDoesNotExist() {
 
         saveToRepository(products);
-        var productForUpdate = new ProductRequestDto("updateProduct", "update", BigDecimal.ZERO);
+        var productForUpdate = new ProductRequestDto("updateProduct", "update", BigDecimal.ONE);
 
         webTestClient.put().uri(URI.concat("/{id}"), NOT_EXISTED_ID)
                 .bodyValue(productForUpdate)

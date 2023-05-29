@@ -297,7 +297,7 @@ public class OrderControllerTest {
         webTestClient.put().uri(URI.concat("/{id}"), id)
                 .bodyValue(orderForUpdate)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().is4xxClientError();
     }
 
     @Test
