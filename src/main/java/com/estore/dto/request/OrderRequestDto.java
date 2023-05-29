@@ -1,5 +1,7 @@
 package com.estore.dto.request;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,8 +20,11 @@ import java.util.List;
 @NoArgsConstructor
 public class OrderRequestDto {
 
+    @NotNull(message = "{field.err.null}")
+    @PastOrPresent(message = "{field.err.date}")
     private LocalDate date;
 
+    @Valid
     private List<OrderItemRequestDto> products;
 
 }
