@@ -1,4 +1,4 @@
-package com.estore.exceptionHandler;
+package com.estore.errorhandling;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
