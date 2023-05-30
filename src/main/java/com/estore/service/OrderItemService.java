@@ -2,10 +2,10 @@ package com.estore.service;
 
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.response.OrderItemResponseDto;
+import com.estore.mapper.OrderItemMapper;
 import com.estore.model.OrderItem;
 import com.estore.repository.OrderItemRepository;
 import com.estore.repository.ProductRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.function.Tuple2;
 
 import java.util.Objects;
 
@@ -31,7 +32,7 @@ public class OrderItemService {
 
     private final ProductRepository productRepository;
 
-    private final ObjectMapper objectMapper;
+    private final OrderItemMapper orderItemMapper;
 
     /**
      * Finds all OrderItems and Products by Order id.
@@ -43,12 +44,10 @@ public class OrderItemService {
     public Flux<OrderItemResponseDto> findAllOrderItemsWithProductsByOrderId(Long id) {
 
         return orderItemRepository.findAllByOrderId(id)
-                .map(o -> objectMapper.convertValue(o, OrderItemResponseDto.class))
+                .map(orderItemMapper::toDto)
                 .zipWith(productRepository.findProductsByOrderId(id))
-                .map(result -> {
-                    result.getT1().setProduct(result.getT2());
-                    return result.getT1();
-                });
+                .doOnNext(result -> result.getT1().setProduct(result.getT2()))
+                .map(Tuple2::getT1);
     }
 
 
@@ -68,7 +67,7 @@ public class OrderItemService {
                         .filter(orderItem -> Objects.equals(orderItem.getProductId(), orderItemRequestDto.getProductId()))
                         .last(new OrderItem())
                         .flatMap(existingOrderItem -> {
-                            OrderItem orderItem = objectMapper.convertValue(orderItemRequestDto, OrderItem.class);
+                            OrderItem orderItem = orderItemMapper.toModel(orderItemRequestDto);
                             orderItem.setOrderId(orderId);
 
                             //Updating product and summarizing quantity
@@ -82,7 +81,7 @@ public class OrderItemService {
                             return orderItemRepository.save(orderItem)
                                     .flatMap(savedOrderItem -> productRepository.findById(savedOrderItem.getProductId())
                                             .map(product -> {
-                                                var orderItemWithProduct = objectMapper.convertValue(savedOrderItem, OrderItemResponseDto.class);
+                                                var orderItemWithProduct = orderItemMapper.toDto(savedOrderItem);
                                                 orderItemWithProduct.setProduct(product);
                                                 return orderItemWithProduct;
                                             }))

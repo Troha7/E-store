@@ -2,9 +2,9 @@ package com.estore.service;
 
 import com.estore.dto.response.ProductResponseDto;
 import com.estore.dto.request.ProductRequestDto;
+import com.estore.mapper.ProductMapper;
 import com.estore.model.Product;
 import com.estore.repository.ProductRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
-    private final ObjectMapper objectMapper;
+    private final ProductMapper productMapper;
 
     /**
      * Create new {@link Product} and save row with data in database
@@ -38,13 +38,13 @@ public class ProductService {
     @Transactional
     public Mono<ProductResponseDto> create(ProductRequestDto productRequestDto) {
         log.info("Start to create product");
-        Product product = objectMapper.convertValue(productRequestDto, Product.class);
         return productRepository.findByName(productRequestDto.getName())
-                .flatMap(p -> Mono.error(new EntityNotFoundException("Product name=" + product.getName() + " already exist")))
-                .switchIfEmpty(Mono.defer(() -> productRepository.save(product)))
-                .doOnError(p -> log.warn("Product name=" + product.getName() + " already exist"))
-                .map(p -> objectMapper.convertValue(p, ProductResponseDto.class))
-                .doOnSuccess(p -> log.info("Product name={} have been created", product.getName()));
+                .flatMap(product -> Mono.error(new EntityNotFoundException("Product name=" + product.getName() + " already exists")))
+                .doOnError(ex -> log.error("Product name=" + productRequestDto.getName() + " already exists"))
+                .switchIfEmpty(Mono.defer(() -> productRepository.save(productMapper.toModel(productRequestDto))
+                        .map(productMapper::toDto)))
+                .cast(ProductResponseDto.class)
+                .doOnSuccess(dto -> log.info("Product name={} has been created", productRequestDto.getName()));
     }
 
     /**
@@ -57,13 +57,13 @@ public class ProductService {
     @Transactional
     public Mono<ProductResponseDto> update(Long id, ProductRequestDto productRequestDto) {
         log.info("Start to update product id={}", id);
-        Product product = objectMapper.convertValue(productRequestDto, Product.class);
+        Product product = productMapper.toModel(productRequestDto);
         product.setId(id);
         return productRepository.findById(id)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Product id=" + id + " wasn't found")))
                 .doOnError(p -> log.warn("Product id=" + id + " wasn't found"))
                 .flatMap(p -> productRepository.save(product))
-                .map(p -> objectMapper.convertValue(p, ProductResponseDto.class))
+                .map(productMapper::toDto)
                 .doOnSuccess(p -> log.info("Product id={} have been updated", p.getId()));
     }
 
@@ -75,7 +75,7 @@ public class ProductService {
     public Flux<ProductResponseDto> findAll() {
         log.info("Start to find all products");
         return productRepository.findAll()
-                .map(p -> objectMapper.convertValue(p, ProductResponseDto.class))
+                .map(productMapper::toDto)
                 .doOnSubscribe(p -> log.info("All products have been found"));
     }
 
@@ -91,7 +91,7 @@ public class ProductService {
         return productRepository.findById(id)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Product id=" + id + " wasn't found")))
                 .doOnError(p -> log.warn("Product id=" + id + " wasn't found"))
-                .map(p -> objectMapper.convertValue(p, ProductResponseDto.class))
+                .map(productMapper::toDto)
                 .doOnSuccess(p -> log.info("Product: {} have been found", p));
     }
 
@@ -107,7 +107,7 @@ public class ProductService {
         return productRepository.findByNameContaining(name)
                 .switchIfEmpty(Flux.error(new EntityNotFoundException("Products containing name=" + name + " wasn't found")))
                 .doOnError(p -> log.warn("Products containing name={} wasn't found", name))
-                .map(p -> objectMapper.convertValue(p, ProductResponseDto.class))
+                .map(productMapper::toDto)
                 .doOnSubscribe(p -> log.info("All products containing name={} have been found", name));
     }
 

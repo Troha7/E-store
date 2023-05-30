@@ -3,11 +3,11 @@ package com.estore.service;
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
 import com.estore.dto.response.OrderResponseDto;
+import com.estore.mapper.OrderMapper;
 import com.estore.model.Order;
 import com.estore.model.OrderItem;
 import com.estore.repository.OrderItemRepository;
 import com.estore.repository.OrderRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +35,7 @@ public class OrderService {
     private final OrderItemRepository orderItemRepository;
     private final OrderItemService orderItemService;
     private final ProductService productService;
-    private final ObjectMapper objectMapper;
+    private final OrderMapper orderMapper;
 
     /**
      * Create a new empty Order
@@ -46,7 +46,7 @@ public class OrderService {
     public Mono<OrderResponseDto> create(Long userId) {
         log.info("Start to create order");
         return orderRepository.save(new Order(null, userId, LocalDate.now()))
-                .map(o -> objectMapper.convertValue(o, OrderResponseDto.class))
+                .map(orderMapper::toDto)
                 .doOnSuccess(o -> log.info("Order id={} have been created", o.getId()));
     }
 
@@ -166,7 +166,7 @@ public class OrderService {
     private Mono<OrderResponseDto> loadOrderRelations(Order order) {
         return orderItemService.findAllOrderItemsWithProductsByOrderId(order.getId()).collectList()
                 .map(orderItems -> {
-                    OrderResponseDto orderWithProducts = objectMapper.convertValue(order, OrderResponseDto.class);
+                    OrderResponseDto orderWithProducts = orderMapper.toDto(order);
                     orderWithProducts.setOrderItems(orderItems);
                     return orderWithProducts;
                 });
@@ -180,12 +180,8 @@ public class OrderService {
      * @return the saved order
      */
     private Mono<Order> saveOrderById(Long id, OrderRequestDto orderRequestDto) {
-        return Mono.just(orderRequestDto)
-                .map(o -> {
-                    Order order = objectMapper.convertValue(o, Order.class);
-                    order.setId(id);
-                    return order;
-                })
+        return Mono.just(orderMapper.toModel(orderRequestDto))
+                .doOnNext(order -> order.setId(id))
                 .flatMap(orderRepository::save);
     }
 

@@ -4,11 +4,12 @@ import com.estore.dto.request.AddressRequestDto;
 import com.estore.dto.request.UserRequestDto;
 import com.estore.dto.response.AddressResponseDto;
 import com.estore.dto.response.UserResponseDto;
+import com.estore.mapper.AddressMapper;
+import com.estore.mapper.UserMapper;
 import com.estore.model.Address;
 import com.estore.model.User;
 import com.estore.repository.AddressRepository;
 import com.estore.repository.UserRepository;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,8 @@ public class UserService {
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
     private final OrderService orderService;
-    private final ObjectMapper objectMapper;
+    private final UserMapper userMapper;
+    private final AddressMapper addressMapper;
 
     /**
      * Create a new User
@@ -40,9 +42,8 @@ public class UserService {
     @Transactional
     public Mono<UserResponseDto> createUser(UserRequestDto userRequestDto) {
         log.info("Start to create User");
-        User newUser = objectMapper.convertValue(userRequestDto, User.class);
-        return userRepository.save(newUser)
-                .map(user -> objectMapper.convertValue(user, UserResponseDto.class))
+        return userRepository.save(userMapper.toModel(userRequestDto))
+                .map(userMapper::toUser)
                 .doOnSuccess(user -> log.info("User id={} have been created", user.getId()));
     }
 
@@ -57,34 +58,29 @@ public class UserService {
     public Mono<UserResponseDto> addAddress(Long userId, AddressRequestDto addressRequestDto) {
         log.info("Start to addAddress by userId={}", userId);
         return getUserById(userId)
-                .map(user -> objectMapper.convertValue(user, UserResponseDto.class))
+                .map(userMapper::toUser)
                 .flatMap(user -> saveAddress(userId, addressRequestDto)
-                        .map(savedAddress -> {
-                            user.setAddress(savedAddress);
-                            return user;
-                        }))
+                        .doOnNext(user::setAddress)
+                        .map(savedAddress -> user))
                 .doOnSuccess(user -> log.info("Address has been added to User id={}", userId));
     }
 
     /**
      * Updates an existing user.
      *
-     * @param id              User id.
-     * @param userRequestDto  the updated user info.
+     * @param id             User id.
+     * @param userRequestDto the updated user info.
      * @return Updated user.
      * @throws EntityNotFoundException User with id wasn't found.
      */
     @Transactional
     public Mono<UserResponseDto> update(Long id, UserRequestDto userRequestDto) {
         log.info("Start to update User");
+        User updatedUser = userMapper.toModel(userRequestDto);
         return getUserById(id)
-                .map(user -> {
-                    User updatedUser = objectMapper.convertValue(userRequestDto, User.class);
-                    updatedUser.setId(user.getId());
-                    return updatedUser;
-                })
-                .flatMap(userRepository::save)
-                .map(updatedUser -> objectMapper.convertValue(updatedUser, UserResponseDto.class))
+                .doOnNext(user -> updatedUser.setId(user.getId()))
+                .flatMap(user -> userRepository.save(updatedUser))
+                .map(userMapper::toUser)
                 .doOnSuccess(user -> log.info("User id={} have been updated", user.getId()));
     }
 
@@ -112,7 +108,7 @@ public class UserService {
     public Mono<UserResponseDto> findUserOrdersHistoryById(Long id) {
         log.info("Start to find User with OrdersHistory By userId={}", id);
         return getUserById(id)
-                .map(user -> objectMapper.convertValue(user, UserResponseDto.class))
+                .map(userMapper::toUser)
                 .flatMap(this::loadOrdersHistory)
                 .doOnSuccess(user -> log.info("User id={} with OrdersHistory have been found", user.getId()));
     }
@@ -184,7 +180,7 @@ public class UserService {
         log.info("Start to find Address by userId");
         return addressRepository.findByUserId(id)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("Address with userId=" + id + " wasn't found")))
-                .map(address -> objectMapper.convertValue(address, AddressResponseDto.class))
+                .map(addressMapper::toDto)
                 .doOnError(user -> log.warn("Address with userId=" + id + " wasn't found"))
                 .doOnSuccess(o -> log.info("Address by userId has been found"));
     }
@@ -196,38 +192,33 @@ public class UserService {
     private Mono<UserResponseDto> loadOrdersHistory(UserResponseDto userDto) {
         return orderService.findAll()
                 .collectList()
-                .map(orders -> {
-                    userDto.setOrdersHistory(orders);
-                    return userDto;
-                });
+                .doOnNext(userDto::setOrdersHistory)
+                .map(orders -> userDto);
     }
 
     private Mono<UserResponseDto> loadAddress(User user) {
+        var userDto = userMapper.toUser(user);
         return findAddressByUserId(user.getId())
-                .map(addressDto -> {
-                    var userDto = objectMapper.convertValue(user, UserResponseDto.class);
-                    userDto.setAddress(addressDto);
-                    return userDto;
-                });
+                .doOnNext(userDto::setAddress)
+                .map(addressDto -> userDto);
     }
 
     private Mono<AddressResponseDto> saveAddress(Long userId, AddressRequestDto addressRequestDto) {
 
-        Address newAddress = objectMapper.convertValue(addressRequestDto, Address.class);
+        Address newAddress = addressMapper.toModel(addressRequestDto);
         newAddress.setUserId(userId);
         return addressRepository.findByUserId(userId)
                 .switchIfEmpty(Mono.just(newAddress))
-                .map(address -> {
-                    if(address.getId() != null) {
+                .doOnNext(address -> {
+                    if (address.getId() != null) {
                         newAddress.setId(address.getId());
                         log.info("Address {} was updated", address);
-                    }else {
+                    } else {
                         log.info("New Address {} was created", address);
                     }
-                    return address;
                 })
                 .flatMap(address -> addressRepository.save(newAddress))
-                .map(address -> objectMapper.convertValue(address, AddressResponseDto.class));
+                .map(addressMapper::toDto);
     }
 
     private Mono<User> getUserById(Long id) {
