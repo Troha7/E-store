@@ -1,4 +1,4 @@
-package com.estore.controller;
+package com.estore.controller.api;
 
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
@@ -7,7 +7,6 @@ import com.estore.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -15,7 +14,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * {@link OrderController}
+ * {@link OrderRestController}
  *
  * @author Dmytro Trotsenko on 3/18/23
  */
@@ -23,9 +22,8 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequestMapping("/orders")
 @RequiredArgsConstructor
-@Slf4j
 @Tag(name = "Orders")
-public class OrderController {
+public class OrderRestController {
 
     private final OrderService orderService;
 

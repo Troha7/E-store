@@ -7,7 +7,7 @@ import com.estore.dto.response.UserResponseDto;
 import com.estore.mapper.AddressMapper;
 import com.estore.mapper.UserMapper;
 import com.estore.model.Address;
-import com.estore.model.User;
+import com.estore.model.UserEntity;
 import com.estore.repository.AddressRepository;
 import com.estore.repository.UserRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -123,7 +123,7 @@ public class UserService {
     public Mono<UserResponseDto> findFullUserInfoById(Long id) {
         log.info("Start to find full User info by id={}", id);
         return getUserById(id)
-                .flatMap(user -> loadAddress(user)
+                .flatMap(userEntity -> loadAddress(userEntity)
                         .flatMap(this::loadOrdersHistory))
                 .doOnSuccess(user -> log.info("Full User info by id={} have been found", user.getId()));
     }
@@ -152,7 +152,7 @@ public class UserService {
     public Mono<Void> deleteById(Long id) {
         log.info("Start to delete user by id={}", id);
         return getUserById(id)
-                .flatMap(user -> userRepository.deleteById(user.getId()))
+                .flatMap(userEntity -> userRepository.deleteById(userEntity.getId()))
                 .doOnSuccess(o -> log.info("User id={} has been deleted", id));
     }
 
@@ -221,7 +221,7 @@ public class UserService {
                 .map(addressMapper::toDto);
     }
 
-    private Mono<User> getUserById(Long id) {
+    private Mono<UserEntity> getUserById(Long id) {
         return userRepository.findById(id)
                 .switchIfEmpty(Mono.error(new EntityNotFoundException("User id=" + id + " wasn't found")))
                 .doOnError(user -> log.warn("User id=" + id + " wasn't found"));

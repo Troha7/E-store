@@ -1,6 +1,7 @@
 package com.estore.dto.request;
 
 import jakarta.validation.constraints.*;
+import com.estore.model.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,15 @@ public class UserRequestDto {
     @NotNull(message = "{field.err.null}")
     @Size(min = 3, max = 25, message = "{field.err.size}")
     private String name;
+    private String username;
+
+    private String password;
+
+    private UserRole role;
+
+    private String firstName;
+
+    private String lastName;
 
     @Pattern(regexp = "([a-z]+[0-9])+@([a-z])+\\.com", message = "{field.err.email}")
     @Size(min = 10, max = 45, message = "{field.err.size}")

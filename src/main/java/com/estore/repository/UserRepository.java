@@ -1,8 +1,9 @@
 package com.estore.repository;
 
-import com.estore.model.User;
+import com.estore.model.UserEntity;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
 import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
 
 /**
  * {@link UserRepository}
@@ -11,5 +12,8 @@ import org.springframework.stereotype.Repository;
  */
 
 @Repository
-public interface UserRepository extends ReactiveCrudRepository<User, Long> {
+public interface UserRepository extends ReactiveCrudRepository<UserEntity, Long> {
+
+    Mono<UserEntity> findByUsername(String username);
+
 }

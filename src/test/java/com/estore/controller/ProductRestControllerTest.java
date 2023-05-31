@@ -1,6 +1,7 @@
 package com.estore.controller;
 
 import com.estore.configuration.TestContainerConfig;
+import com.estore.controller.api.ProductRestController;
 import com.estore.dto.request.ProductRequestDto;
 import com.estore.dto.response.ProductResponseDto;
 import com.estore.service.ProductService;
@@ -22,7 +23,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * This class {@link ProductControllerTest} provides integration tests for the {@link ProductController} class,
+ * This class {@link ProductRestControllerTest} provides integration tests for the {@link ProductRestController} class,
  * testing its API endpoints.
  * <p>The tests are performed using a test container with a PostgreSQL database.</p>
  * <p>{@link TestContainerConfig} is the class for test container configuration.</p>
@@ -32,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith(TestContainerConfig.class)
-public class ProductControllerTest {
+public class ProductRestControllerTest {
 
     @Autowired
     private ProductService productService;
