@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
   <meta charset="UTF-8">
   <title>Navbar</title>
@@ -15,11 +15,23 @@
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
         <a class="nav-item nav-link" href="/">Home</a>
-        <a class="nav-item nav-link" href="catalog">Catalog</a>
-        <a class="nav-item nav-link" href="#">Orders</a>
-        <a class="nav-item nav-link" href="#">Users</a>
+        <a class="nav-item nav-link" href="/catalog">Catalog</a>
+        <a class="nav-item nav-link" href="/cart">Cart</a>
       </div>
+
+      <div class="navbar-nav" th:if="${#authentication!=null && #strings.contains(#authentication.principal.authorities, 'ADMIN')}">
+        <a class="nav-item nav-link" href="/admin">Admin panel</a>
+      </div>
+
     </div>
+
+    <div>
+      <p>Hello <span th:remove="tag" sec:authentication="name">Anonimus</span>!</p>
+      <form class="form-group" th:action="@{/logout}" method="POST">
+        <button type="submit" class="btn btn-outline-light" th:text="${#authentication==null ? 'Sign In' : 'Sign Out'}"></button>
+      </form>
+    </div>
+
   </nav>
 
 </div>
