@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Cart</title>
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+          integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" rel="stylesheet">
+</head>
+<body>
+<div th:insert="~{fragments/navbar :: navbar}"></div>
+
+<div class="wrapper-main">
+
+    <h2 class="text-center"> Cart </h2>
+
+    <div class="alert alert-danger" th:if="${err}">
+        <p th:text="${err}"> text </p>
+    </div>
+
+    <div class="d-flex" th:if="${#authentication != null && #strings.contains(#authentication.principal.authorities, 'ADMIN')}">
+        <form class="form-inline" id="getForm">
+            <label for="orderId">Find by ID
+                <input class="form-control" type="number" min="1" name="id" id="orderId" th:value="${id}" required>
+            </label>
+            <button type="submit" class="btn btn-primary mb-2">Search</button>
+        </form>
+
+        <form class="form-inline" id="getOrderByUserId">
+            <label for="userId">Find by User ID
+                <input class="form-control" type="number" min="1" name="id" id="userId" th:value="${id}" required>
+            </label>
+            <button type="submit" class="btn btn-primary mb-2">Search</button>
+            <a href="/cart" class="btn btn-secondary mb-2" role="button" aria-pressed="true">Clear</a>
+        </form>
+    </div>
+
+    <table class="table table-striped table-sm">
+        <tr th:each="order: ${orders}">
+            <td>
+                <form class="form-inline" th:id="${order.id}" th:action="@{/cart/update/{id}(id=${order.id})}"
+                      th:object="${orderForm.products}" method="post">
+                    <table>
+                        <tr>
+                            <td>
+                                <label for="id"> ID
+                                    <input class="form-control" id="id" type="text" th:value="${order.id}" readonly>
+                                </label>
+                            </td>
+                            <td>
+                                <label for="date" class="col-md-12"> Date
+                                    <input class="form-control" id="date" type="date" name="date"
+                                           th:value="${order.date}" readonly>
+                                </label>
+                            </td>
+                            <td>
+                                <label for="status" class="col-md-8"> Status
+                                    <input class="form-control" id="status" type="text" name="status"
+                                           th:value="${order.status}" readonly>
+                                </label>
+                            </td>
+                        </tr>
+                        <tr th:each="orderItem, orderItemStat: ${order.orderItems}">
+                            <div class="form-group row">
+                                <input class="form-control" id="productId" type="hidden"
+                                       th:name="|products[${orderItemStat.index}].productId|"
+                                       th:value="${orderItem.product.id}">
+                                <td>
+                                    <div>
+                                        <label th:if="${order.orderItems[0].equals(orderItem)}">Name</label>
+                                        <input class="form-control" id="name" type="text"
+                                               th:value="${orderItem.product.name}" readonly>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <label th:if="${order.orderItems[0].equals(orderItem)}">Description</label>
+                                        <input class="form-control" id="description" type="text"
+                                               th:value="${orderItem.product.description}" readonly>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="col-md-8">
+                                        <label th:if="${order.orderItems[0].equals(orderItem)}">Price</label>
+                                        <input class="form-control" id="price" type="number" step="0.01" min="0"
+                                               th:value="${orderItem.product.price}" readonly>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="col-md-4">
+                                            <label th:if="${order.orderItems[0].equals(orderItem)}">Quantity</label>
+                                            <input class="form-control" id="quantity" type="number" min="1"
+                                                   th:name="|products[${orderItemStat.index}].quantity|"
+                                                   th:value="${orderItem.quantity}">
+                                        </div>
+                                        <button class="btn btn-danger col-md-4 h-75 mt-auto" type="button"
+                                                th:onclick="'deleteById(\'/orders/product/' + ${order.id} + '/' + ${orderItem.product.id} + '\')'">
+                                            Delete
+                                        </button>
+                                    </div>
+                                </td>
+                            </div>
+                        </tr>
+                        <tr>
+                            <td>
+                                <label for="quantity" class="col-md-8"> Total price
+                                    <input class="form-control" id="totalPrice" type="number"
+                                           th:value="${order.totalPrice}">
+                                </label>
+                            </td>
+
+                        </tr>
+                    </table>
+                </form>
+            </td>
+            <td>
+                <form th:if="${#authentication != null && #strings.contains(#authentication.principal.authorities, 'USER')}"
+                      th:action="@{/cart/buy}" th:object="${order}" method="post">
+                    <input type="hidden" name="id" th:value="${order.id}">
+                    <input type="hidden" name="userId" th:value="${order.userId}">
+                    <input type="hidden" name="date" th:value="${order.date}">
+                    <input type="hidden" name="status" th:value="${order.status}">
+                    <input type="hidden" name="totalPrice" th:value="${order.totalPrice}">
+                    <br>
+                    <button class="btn btn-success" type="submit">BUY</button>
+                </form>
+            </td>
+            <td>
+                <br>
+                <button class="btn btn-warning" th:form="${order.id}" type="submit">Update</button>
+            </td>
+            <td>
+                <br>
+                <!--        <button class="btn btn-primary" th:onclick="'deleteById(\'/orders/' + ${order.id} + '\')'"> Delete </button>-->
+            </td>
+        </tr>
+    </table>
+
+</div>
+
+<div th:insert="~{fragments/footer :: footer}"></div>
+
+<script>
+    function getById(url, formId, inputId) {
+        var form = document.getElementById(formId);
+        var input = document.getElementById(inputId);
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            var id = input.value;
+            window.location.href = url + id;
+        });
+    }
+    getById("/cart/user/", "getOrderByUserId", "userId");
+</script>
+
+<script>
+    function getById(url, formId, inputId) {
+        var form = document.getElementById(formId);
+        var input = document.getElementById(inputId);
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            var id = input.value;
+            window.location.href = url + id;
+        });
+    }
+    getById("/cart/", "getForm", "orderId");
+</script>
+
+<script th:src="@{/js/deleteFunction.js}"></script>
+
+</body>
+</html>
