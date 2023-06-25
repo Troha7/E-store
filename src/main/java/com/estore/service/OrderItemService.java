@@ -2,18 +2,17 @@ package com.estore.service;
 
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.response.OrderItemResponseDto;
+import com.estore.exception.ModelNotFoundException;
 import com.estore.mapper.OrderItemMapper;
 import com.estore.model.OrderItem;
 import com.estore.repository.OrderItemRepository;
 import com.estore.repository.ProductRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.util.function.Tuple2;
 
 import java.util.Objects;
 
@@ -42,14 +41,15 @@ public class OrderItemService {
      */
 
     public Flux<OrderItemResponseDto> findAllOrderItemsWithProductsByOrderId(Long id) {
-
         return orderItemRepository.findAllByOrderId(id)
-                .map(orderItemMapper::toDto)
-                .zipWith(productRepository.findProductsByOrderId(id))
-                .doOnNext(result -> result.getT1().setProduct(result.getT2()))
-                .map(Tuple2::getT1);
+                .flatMap(orderItem -> productRepository.findProductsByOrderId(id)
+                        .filter(product -> orderItem.getProductId().equals(product.getId()))
+                        .map(product -> {
+                            var orderItemDto = orderItemMapper.toDto(orderItem);
+                            orderItemDto.setProduct(product);
+                            return orderItemDto;
+                        }));
     }
-
 
     /**
      * Add a product to the order by order id.
@@ -62,7 +62,7 @@ public class OrderItemService {
     public Mono<OrderItemResponseDto> addProductByOrderId(Long orderId, OrderItemRequestDto orderItemRequestDto) {
         log.info("Start to addProduct {}", orderItemRequestDto);
 
-        return checkExistOrderAndProduct(orderId, orderItemRequestDto)
+        return checkExistOrderAndProduct(orderId, orderItemRequestDto.getProductId())
                 .then(orderItemRepository.findAllByOrderId(orderId)
                         .filter(orderItem -> Objects.equals(orderItem.getProductId(), orderItemRequestDto.getProductId()))
                         .last(new OrderItem())
@@ -90,19 +90,33 @@ public class OrderItemService {
     }
 
     /**
+     * Remove a product from the order by order id and product id.
+     *
+     * @param orderId order id
+     * @param productId product id
+     */
+    @Transactional
+    public Mono<Void> removeProductFromOrderById(Long orderId, Long productId) {
+        log.info("Start to remove Product id={} from Order id={}", productId, orderId);
+        return checkExistOrderAndProduct(orderId, productId)
+                .then(orderItemRepository.deleteOrderItemByOrderIdAndProductId(orderId,productId))
+                .doOnSuccess(res -> log.info("Product id={} has been removed from Order id={}", productId, orderId));
+    }
+
+    /**
      * Checks if the given order and product exist.
      *
-     * @param orderId             Order id.
-     * @param orderItemRequestDto The OrderItem information to check.
-     * @return OrderItemRequestDto if existed Order and Product in repository.
-     * @throws EntityNotFoundException If the order or product is not found.
+     * @param orderId   Order id.
+     * @param productId Product id.
+     * @return Mono<Boolean> true if existed Order and Product in repository.
+     * @throws ModelNotFoundException If the order or product is not found.
      */
-    public Mono<OrderItemRequestDto> checkExistOrderAndProduct(Long orderId, OrderItemRequestDto orderItemRequestDto) {
-        return orderItemRepository.existByOrderIdAndProductId(orderId, orderItemRequestDto.getProductId())
+
+    public Mono<Boolean> checkExistOrderAndProduct(Long orderId, Long productId) {
+        return orderItemRepository.existByOrderIdAndProductId(orderId, productId)
                 .filter(exists -> exists)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Order or Product not found")))
-                .thenReturn(orderItemRequestDto)
-                .doOnError(error -> log.warn("Order or Product not found"));
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("Order or Product not found")))
+                .doOnError(error -> log.info("Order or Product not found"));
     }
 
 }
