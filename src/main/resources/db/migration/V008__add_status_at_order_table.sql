@@ -1,0 +1,2 @@
+ALTER TABLE e_store.order
+    ADD status VARCHAR(10) NOT NULL DEFAULT 'CREATED';
