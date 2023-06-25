@@ -26,4 +26,5 @@ public interface OrderItemRepository extends ReactiveCrudRepository<OrderItem, L
             """)
     Mono<Boolean> existByOrderIdAndProductId(Long orderId, Long productId);
 
+    Mono<Void> deleteOrderItemByOrderIdAndProductId(Long orderId, Long productId);
 }
