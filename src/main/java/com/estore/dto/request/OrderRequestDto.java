@@ -25,6 +25,7 @@ public class OrderRequestDto {
     private LocalDate date;
 
     @Valid
+    @NotNull(message = "{field.err.null}")
     private List<OrderItemRequestDto> products;
 
 }
