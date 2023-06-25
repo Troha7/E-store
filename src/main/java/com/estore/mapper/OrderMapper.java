@@ -15,11 +15,14 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
 
+    @Mapping(target = "totalPrice", ignore = true)
     @Mapping(target = "orderItems", ignore = true)
     OrderResponseDto toDto(Order order);
 
     @Mapping(target = "userId", ignore = true)
     @Mapping(target = "id", ignore = true)
     Order toModel(OrderRequestDto orderRequestDto);
+
+    Order toModel(OrderResponseDto orderResponseDto);
 
 }
