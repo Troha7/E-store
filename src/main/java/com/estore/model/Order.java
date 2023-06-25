@@ -30,4 +30,7 @@ public class Order {
     @Column("order_date")
     private LocalDate date;
 
+    @Column
+    private OrderStatus status;
+
 }
