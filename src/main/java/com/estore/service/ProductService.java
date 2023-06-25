@@ -2,10 +2,10 @@ package com.estore.service;
 
 import com.estore.dto.response.ProductResponseDto;
 import com.estore.dto.request.ProductRequestDto;
+import com.estore.exception.ModelNotFoundException;
 import com.estore.mapper.ProductMapper;
 import com.estore.model.Product;
 import com.estore.repository.ProductRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -39,7 +39,7 @@ public class ProductService {
     public Mono<ProductResponseDto> create(ProductRequestDto productRequestDto) {
         log.info("Start to create product");
         return productRepository.findByName(productRequestDto.getName())
-                .flatMap(product -> Mono.error(new EntityNotFoundException("Product name=" + product.getName() + " already exists")))
+                .flatMap(product -> Mono.error(new ModelNotFoundException("Product name=" + product.getName() + " already exists")))
                 .doOnError(ex -> log.error("Product name=" + productRequestDto.getName() + " already exists"))
                 .switchIfEmpty(Mono.defer(() -> productRepository.save(productMapper.toModel(productRequestDto))
                         .map(productMapper::toDto)))
@@ -60,7 +60,7 @@ public class ProductService {
         Product product = productMapper.toModel(productRequestDto);
         product.setId(id);
         return productRepository.findById(id)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Product id=" + id + " wasn't found")))
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("Product id=" + id + " wasn't found")))
                 .doOnError(p -> log.warn("Product id=" + id + " wasn't found"))
                 .flatMap(p -> productRepository.save(product))
                 .map(productMapper::toDto)
@@ -84,12 +84,12 @@ public class ProductService {
      *
      * @param id product id
      * @return ProductResponseDto
-     * @throws EntityNotFoundException Product with id wasn't found
+     * @throws ModelNotFoundException Product with id wasn't found
      */
     public Mono<ProductResponseDto> findById(Long id) {
         log.info("Start to find product by id={}", id);
         return productRepository.findById(id)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Product id=" + id + " wasn't found")))
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("Product id=" + id + " wasn't found")))
                 .doOnError(p -> log.warn("Product id=" + id + " wasn't found"))
                 .map(productMapper::toDto)
                 .doOnSuccess(p -> log.info("Product: {} have been found", p));
@@ -100,12 +100,12 @@ public class ProductService {
      *
      * @param name product containing name
      * @return ProductResponseDto
-     * @throws EntityNotFoundException Products containing name wasn't found
+     * @throws ModelNotFoundException Products containing name wasn't found
      */
     public Flux<ProductResponseDto> findByNameContaining(String name) {
         log.info("Start to find all products containing name={}", name);
         return productRepository.findByNameContaining(name)
-                .switchIfEmpty(Flux.error(new EntityNotFoundException("Products containing name=" + name + " wasn't found")))
+                .switchIfEmpty(Flux.error(new ModelNotFoundException("Products containing name=" + name + " wasn't found")))
                 .doOnError(p -> log.warn("Products containing name={} wasn't found", name))
                 .map(productMapper::toDto)
                 .doOnSubscribe(p -> log.info("All products containing name={} have been found", name));
@@ -120,7 +120,7 @@ public class ProductService {
     public Mono<Void> deleteById(Long id) {
         log.info("Start to delete product by id={}", id);
         return productRepository.findById(id)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Product id=" + id + " wasn't found")))
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("Product id=" + id + " wasn't found")))
                 .doOnError(p -> log.warn("Product id=" + id + " wasn't found"))
                 .flatMap(productRepository::delete)
                 .doOnSuccess(p -> log.info("Product id={} have been deleted", id));
