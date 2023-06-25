@@ -1,4 +1,4 @@
-package com.estore.controller.api;
+package com.estore.controller.rest;
 
 import com.estore.dto.request.AddressRequestDto;
 import com.estore.dto.request.UserRequestDto;

@@ -1,4 +1,4 @@
-package com.estore.controller.api;
+package com.estore.controller.rest;
 
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
@@ -7,6 +7,7 @@ import com.estore.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/orders")
 @RequiredArgsConstructor
 @Tag(name = "Orders")
+@Slf4j
 public class OrderRestController {
 
     private final OrderService orderService;
@@ -36,7 +38,7 @@ public class OrderRestController {
 
     @PostMapping("/add/{orderId}")
     @ResponseStatus(HttpStatus.CREATED)
-    @Operation(summary = "Add product and quantity in Order by order id")
+    @Operation(summary = "Add product and quantity in Order")
     public Mono<OrderResponseDto> addProduct(@PathVariable long orderId, @Validated @RequestBody OrderItemRequestDto orderItem) {
         return orderService.addProductByOrderId(orderId, orderItem);
     }
@@ -55,11 +57,25 @@ public class OrderRestController {
         return orderService.findAll();
     }
 
+    @GetMapping("/user/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    @Operation(summary = "Find all Orders by UserId")
+    public Flux<OrderResponseDto> findAllByUserId(@PathVariable long id) {
+        return orderService.findAllByUserId(id);
+    }
+
     @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Find Order by id")
     public Mono<OrderResponseDto> findById(@PathVariable("id") long id) {
         return orderService.findById(id);
+    }
+
+    @DeleteMapping("/product/{userId}/{productId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @Operation(summary = "Remove Product from the Order by user id and product id")
+    public Mono<Void> removeProduct(@PathVariable("userId") long userId, @PathVariable("productId") long productId) {
+        return orderService.removeProductFromOrderById(userId, productId);
     }
 
     @DeleteMapping("/{id}")
@@ -68,4 +84,5 @@ public class OrderRestController {
     public Mono<Void> delete(@PathVariable("id") long id) {
         return orderService.deleteById(id);
     }
+
 }

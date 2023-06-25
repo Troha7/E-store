@@ -1,4 +1,4 @@
-package com.estore.controller.api;
+package com.estore.controller.rest;
 
 import com.estore.dto.response.ProductResponseDto;
 import com.estore.dto.request.ProductRequestDto;
@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -42,14 +43,14 @@ public class ProductRestController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @Operation(summary = "Create a new Product")
-    public Mono<ProductResponseDto> createProduct(@RequestBody ProductRequestDto product) {
+    public Mono<ProductResponseDto> createProduct(@Validated @RequestBody ProductRequestDto product) {
         return productService.create(product);
     }
 
     @PutMapping("/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Operation(summary = "Update an existing Product")
-    public Mono<ProductResponseDto> updateProduct(@PathVariable long id, @RequestBody ProductRequestDto product) {
+    public Mono<ProductResponseDto> updateProduct(@PathVariable long id, @Validated @RequestBody ProductRequestDto product) {
         return productService.update(id, product);
     }
 
