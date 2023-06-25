@@ -4,15 +4,16 @@ import com.estore.dto.request.AddressRequestDto;
 import com.estore.dto.request.UserRequestDto;
 import com.estore.dto.response.AddressResponseDto;
 import com.estore.dto.response.UserResponseDto;
+import com.estore.exception.ModelNotFoundException;
 import com.estore.mapper.AddressMapper;
 import com.estore.mapper.UserMapper;
 import com.estore.model.Address;
 import com.estore.model.UserEntity;
 import com.estore.repository.AddressRepository;
 import com.estore.repository.UserRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
@@ -33,6 +34,7 @@ public class UserService {
     private final OrderService orderService;
     private final UserMapper userMapper;
     private final AddressMapper addressMapper;
+    private final PasswordEncoder passwordEncoder;
 
     /**
      * Create a new User
@@ -42,6 +44,7 @@ public class UserService {
     @Transactional
     public Mono<UserResponseDto> createUser(UserRequestDto userRequestDto) {
         log.info("Start to create User");
+        userRequestDto.setPassword(passwordEncoder.encode(userRequestDto.getPassword()));
         return userRepository.save(userMapper.toModel(userRequestDto))
                 .map(userMapper::toUser)
                 .doOnSuccess(user -> log.info("User id={} have been created", user.getId()));
@@ -71,12 +74,12 @@ public class UserService {
      * @param id             User id.
      * @param userRequestDto the updated user info.
      * @return Updated user.
-     * @throws EntityNotFoundException User with id wasn't found.
+     * @throws ModelNotFoundException User with id wasn't found.
      */
     @Transactional
     public Mono<UserResponseDto> update(Long id, UserRequestDto userRequestDto) {
         log.info("Start to update User");
-        User updatedUser = userMapper.toModel(userRequestDto);
+        UserEntity updatedUser = userMapper.toModel(userRequestDto);
         return getUserById(id)
                 .doOnNext(user -> updatedUser.setId(user.getId()))
                 .flatMap(user -> userRepository.save(updatedUser))
@@ -89,7 +92,7 @@ public class UserService {
      *
      * @param id user id
      * @return Find user with the related address loaded
-     * @throws EntityNotFoundException User with id wasn't found
+     * @throws ModelNotFoundException User with id wasn't found
      */
     public Mono<UserResponseDto> findById(Long id) {
         log.info("Start to find user by id={}", id);
@@ -99,11 +102,27 @@ public class UserService {
     }
 
     /**
+     * Find User by Username
+     *
+     * @param username User name
+     * @return Find user
+     * @throws ModelNotFoundException Username wasn't found
+     */
+    public Mono<UserResponseDto> findByUsername(String username) {
+        log.info("Start to find user by username={}", username);
+        return userRepository.findByUsername(username)
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("Username=" + username + " wasn't found")))
+                .doOnError(user -> log.warn("Username=" + username + " wasn't found"))
+                .map(userMapper::toUser)
+                .doOnSuccess(user -> log.info("User id={} have been found", user.getId()));
+    }
+
+    /**
      * Find User info and Orders history by user id
      *
      * @param id user id
      * @return Find user with the related orders history
-     * @throws EntityNotFoundException User with id wasn't found
+     * @throws ModelNotFoundException User with id wasn't found
      */
     public Mono<UserResponseDto> findUserOrdersHistoryById(Long id) {
         log.info("Start to find User with OrdersHistory By userId={}", id);
@@ -118,7 +137,7 @@ public class UserService {
      *
      * @param id user id
      * @return Find user with the related address and orders history
-     * @throws EntityNotFoundException User with id wasn't found
+     * @throws ModelNotFoundException User with id wasn't found
      */
     public Mono<UserResponseDto> findFullUserInfoById(Long id) {
         log.info("Start to find full User info by id={}", id);
@@ -146,7 +165,7 @@ public class UserService {
      *
      * @param id User id.
      * @return Mono<Void>
-     * @throws EntityNotFoundException if the user is not found.
+     * @throws ModelNotFoundException if the user is not found.
      */
     @Transactional
     public Mono<Void> deleteById(Long id) {
@@ -174,12 +193,12 @@ public class UserService {
      *
      * @param id user id
      * @return User address
-     * @throws EntityNotFoundException Address with id wasn't found
+     * @throws ModelNotFoundException Address with id wasn't found
      */
     public Mono<AddressResponseDto> findAddressByUserId(Long id) {
         log.info("Start to find Address by userId");
         return addressRepository.findByUserId(id)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Address with userId=" + id + " wasn't found")))
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("Address with userId=" + id + " wasn't found")))
                 .map(addressMapper::toDto)
                 .doOnError(user -> log.warn("Address with userId=" + id + " wasn't found"))
                 .doOnSuccess(o -> log.info("Address by userId has been found"));
@@ -196,9 +215,10 @@ public class UserService {
                 .map(orders -> userDto);
     }
 
-    private Mono<UserResponseDto> loadAddress(User user) {
+    private Mono<UserResponseDto> loadAddress(UserEntity user) {
         var userDto = userMapper.toUser(user);
         return findAddressByUserId(user.getId())
+                .onErrorReturn(new AddressResponseDto())
                 .doOnNext(userDto::setAddress)
                 .map(addressDto -> userDto);
     }
@@ -223,7 +243,7 @@ public class UserService {
 
     private Mono<UserEntity> getUserById(Long id) {
         return userRepository.findById(id)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("User id=" + id + " wasn't found")))
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("User id=" + id + " wasn't found")))
                 .doOnError(user -> log.warn("User id=" + id + " wasn't found"));
     }
 
