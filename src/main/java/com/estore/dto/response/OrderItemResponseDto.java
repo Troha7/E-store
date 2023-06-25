@@ -5,7 +5,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Objects;
 
 /**
  * {@link OrderItemResponseDto}
@@ -24,16 +23,4 @@ public class OrderItemResponseDto {
 
     private Integer quantity;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        OrderItemResponseDto that = (OrderItemResponseDto) o;
-        return Objects.equals(product, that.product) && quantity.equals(that.quantity);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(product, quantity);
-    }
 }
