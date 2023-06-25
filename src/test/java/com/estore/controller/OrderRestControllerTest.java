@@ -1,7 +1,7 @@
 package com.estore.controller;
 
 import com.estore.configuration.TestContainerConfig;
-import com.estore.controller.api.OrderRestController;
+import com.estore.controller.rest.OrderRestController;
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
 import com.estore.dto.response.OrderItemResponseDto;
@@ -29,8 +29,10 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import static com.estore.model.OrderStatus.CREATED;
 import static com.estore.model.UserRole.USER;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 /**
  * This class {@link OrderRestControllerTest} provides integration tests for the {@link OrderRestController} class,
@@ -78,8 +80,11 @@ public class OrderRestControllerTest {
     @BeforeEach
     public void setup() {
         String localHost = "http://localhost:";
+        String username = "admin";
+        String password = "admin";
         webTestClient = WebTestClient.bindToServer()
                 .baseUrl(localHost + randomServerPort)
+                .filter(basicAuthentication(username, password))
                 .build();
 
         saveProductsIfNotExist(products);
@@ -138,7 +143,7 @@ public class OrderRestControllerTest {
 
         webTestClient.get().uri(URI.concat("/{id}"), NOT_EXISTED_ORDER_ID)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     //-----------------------------------
@@ -147,7 +152,7 @@ public class OrderRestControllerTest {
 
     @Test
     void shouldCreatedNewOrder() {
-        var user = new UserEntity(null, "User1", "1234", USER, "First", "Last","user1@gmail.com", "+380991111111");
+        var user = new UserEntity(null, "User1", "1234", USER, "First", "Last", "user1@gmail.com", "+380991111111");
 
         UserEntity newUserEntity = userRepository.save(user)
                 .block();
@@ -155,12 +160,13 @@ public class OrderRestControllerTest {
         assert newUserEntity != null;
         Long userId = newUserEntity.getId();
 
-        var expectedOrder = new OrderResponseDto(null, LocalDate.now(), null);
+        var expectedOrder = new OrderResponseDto(null, user.getId(), LocalDate.now(), null, CREATED, null);
 
         webTestClient.post().uri(URI.concat("/{userId}"), userId)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(OrderResponseDto.class)
+                .value(order -> order.setId(null))
                 .value(order -> assertEquals(expectedOrder, order));
 
         orderService.findAll()
@@ -178,13 +184,19 @@ public class OrderRestControllerTest {
 
         List<OrderItemResponseDto> addedOrderItemList = List.of(
                 new OrderItemResponseDto(null, products.get(0), 1));
-        var addedOrderWithProducts = new OrderResponseDto(null, LocalDate.now(), addedOrderItemList);
+
+        var totalPrice = products.get(0).getPrice();
+
+        var addedOrderWithProducts = new OrderResponseDto(null, USER_ID, LocalDate.now(), addedOrderItemList, CREATED, totalPrice);
 
         webTestClient.post().uri(URI.concat("/add/{id}"), id)
                 .bodyValue(orderItems.get(0))
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(OrderResponseDto.class)
+                .value(order -> order.setId(null))
+                .value(order -> order.getOrderItems()
+                        .forEach(orderItem -> orderItem.setId(null)))
                 .value(order -> assertEquals(addedOrderWithProducts, order));
     }
 
@@ -201,13 +213,20 @@ public class OrderRestControllerTest {
         List<OrderItemResponseDto> addedOrderItemList = List.of(
                 new OrderItemResponseDto(null, products.get(0), 2));
 
-        var addedOrderWithProducts = new OrderResponseDto(null, LocalDate.now(), addedOrderItemList);
+        var price = addedOrderItemList.get(0).getProduct().getPrice();
+        var quantity = BigDecimal.valueOf(addedOrderItemList.get(0).getQuantity());
+        var totalPrice = price.multiply(quantity);
+
+        var addedOrderWithProducts = new OrderResponseDto(null, USER_ID, LocalDate.now(), addedOrderItemList, CREATED, totalPrice);
 
         webTestClient.post().uri(URI.concat("/add/{id}"), id)
                 .bodyValue(orderItems.get(0))
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(OrderResponseDto.class)
+                .value(order -> order.setId(null))
+                .value(order -> order.getOrderItems()
+                        .forEach(orderItem -> orderItem.setId(null)))
                 .value(order -> assertEquals(addedOrderWithProducts, order));
     }
 
@@ -223,7 +242,7 @@ public class OrderRestControllerTest {
         webTestClient.post().uri(URI.concat("/add/{id}"), id)
                 .bodyValue(orderItem)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     @Test
@@ -234,7 +253,7 @@ public class OrderRestControllerTest {
         webTestClient.post().uri(URI.concat("/add/{id}"), NOT_EXISTED_ORDER_ID)
                 .bodyValue(orderItems.get(1))
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     //-----------------------------------
@@ -252,13 +271,19 @@ public class OrderRestControllerTest {
 
         List<OrderItemResponseDto> updatedOrderItemList = List.of(
                 new OrderItemResponseDto(null, products.get(0), 1));
-        var updatedOrderWithProducts = new OrderResponseDto(null, updatedDate, updatedOrderItemList);
+
+        var totalPrice = products.get(0).getPrice();
+
+        var updatedOrderWithProducts = new OrderResponseDto(null, USER_ID, updatedDate, updatedOrderItemList, CREATED, totalPrice);
 
         webTestClient.put().uri(URI.concat("/{id}"), id)
                 .bodyValue(orderForUpdate)
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(OrderResponseDto.class)
+                .value(order -> order.setId(null))
+                .value(order -> order.getOrderItems()
+                        .forEach(orderItem -> orderItem.setId(null)))
                 .value(order -> assertEquals(updatedOrderWithProducts, order));
     }
 
@@ -270,7 +295,7 @@ public class OrderRestControllerTest {
         webTestClient.put().uri(URI.concat("/{id}"), NOT_EXISTED_ORDER_ID)
                 .bodyValue(orderForUpdate)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     @Test
@@ -285,7 +310,7 @@ public class OrderRestControllerTest {
         webTestClient.put().uri(URI.concat("/{id}"), id)
                 .bodyValue(orderForUpdate)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     @Test
@@ -315,7 +340,7 @@ public class OrderRestControllerTest {
         webTestClient.put().uri(URI.concat("/{id}"), id)
                 .bodyValue(orderForUpdate)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     //-----------------------------------

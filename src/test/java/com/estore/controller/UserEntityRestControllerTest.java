@@ -1,14 +1,14 @@
 package com.estore.controller;
 
 import com.estore.configuration.TestContainerConfig;
-import com.estore.controller.api.UserRestController;
+import com.estore.controller.rest.UserRestController;
 import com.estore.dto.request.AddressRequestDto;
 import com.estore.dto.request.UserRequestDto;
 import com.estore.dto.response.AddressResponseDto;
 import com.estore.dto.response.UserResponseDto;
+import com.estore.exception.ModelNotFoundException;
 import com.estore.service.OrderService;
 import com.estore.service.UserService;
-import jakarta.persistence.EntityNotFoundException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
@@ -26,6 +26,7 @@ import java.util.stream.IntStream;
 
 import static com.estore.model.UserRole.USER;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 /**
  * This class {@link UserEntityRestControllerTest} provides integration tests for the {@link UserRestController} class,
@@ -55,7 +56,7 @@ public class UserEntityRestControllerTest {
     private final Long NOT_EXISTED_USER_ID = 100L;
 
     private final List<UserRequestDto> users = List.of(
-            new UserRequestDto("User1",  "1234", USER, "First1", "Last1", "user1@gmail.com", "+380991111111"),
+            new UserRequestDto("User1", "1234", USER, "First1", "Last1", "user1@gmail.com", "+380991111111"),
             new UserRequestDto("User2", "1594", USER, "First2", "Last2", "user2@gmail.com", "+380992222222"),
             new UserRequestDto("User3", "0031", USER, "First3", "Last3", "user3@gmail.com", "+380993333333")
     );
@@ -69,8 +70,11 @@ public class UserEntityRestControllerTest {
     @BeforeEach
     public void setup() {
         String localHost = "http://localhost:";
+        String username = "admin";
+        String password = "admin";
         webTestClient = WebTestClient.bindToServer()
                 .baseUrl(localHost + randomServerPort)
+                .filter(basicAuthentication(username, password))
                 .build();
     }
 
@@ -140,7 +144,7 @@ public class UserEntityRestControllerTest {
 
         webTestClient.get().uri(URI.concat("/{id}"), NOT_EXISTED_USER_ID)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     //-----------------------------------
@@ -154,7 +158,7 @@ public class UserEntityRestControllerTest {
 
         var expectedUser = new UserResponseDto();
         expectedUser.setUsername(newUser.getUsername());
-        expectedUser.setPassword(newUser.getPassword());
+        expectedUser.setRole(USER);
         expectedUser.setFirstName(newUser.getFirstName());
         expectedUser.setLastName(newUser.getLastName());
         expectedUser.setEmail(newUser.getEmail());
@@ -165,6 +169,10 @@ public class UserEntityRestControllerTest {
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(UserResponseDto.class)
+                .value(user -> {
+                    user.setId(null);
+                    user.setPassword(null);
+                })
                 .value(user -> assertEquals(expectedUser, user));
     }
 
@@ -181,6 +189,7 @@ public class UserEntityRestControllerTest {
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(UserResponseDto.class)
+                .value(user -> user.getAddress().setId(null))
                 .value(user -> assertEquals(expectedUser, user));
     }
 
@@ -196,6 +205,7 @@ public class UserEntityRestControllerTest {
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(UserResponseDto.class)
+                .value(user -> user.getAddress().setId(null))
                 .value(user -> assertEquals(expectedUser, user));
     }
 
@@ -207,7 +217,7 @@ public class UserEntityRestControllerTest {
         webTestClient.post().uri(URI.concat("/{userId}"), NOT_EXISTED_USER_ID)
                 .bodyValue(addresses.get(2))
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     //-----------------------------------
@@ -248,7 +258,7 @@ public class UserEntityRestControllerTest {
         webTestClient.put().uri(URI.concat("/{id}"), NOT_EXISTED_USER_ID)
                 .bodyValue(updatedUser)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     //-----------------------------------
@@ -267,12 +277,12 @@ public class UserEntityRestControllerTest {
 
         userService.findById(id)
                 .as(StepVerifier::create)
-                .expectError(EntityNotFoundException.class)
+                .expectError(ModelNotFoundException.class)
                 .verify();
 
         userService.findAddressByUserId(id)
                 .as(StepVerifier::create)
-                .expectError(EntityNotFoundException.class)
+                .expectError(ModelNotFoundException.class)
                 .verify();
     }
 

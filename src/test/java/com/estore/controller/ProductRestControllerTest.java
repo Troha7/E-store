@@ -1,9 +1,11 @@
 package com.estore.controller;
 
 import com.estore.configuration.TestContainerConfig;
-import com.estore.controller.api.ProductRestController;
+import com.estore.controller.rest.ProductRestController;
 import com.estore.dto.request.ProductRequestDto;
 import com.estore.dto.response.ProductResponseDto;
+import com.estore.model.Product;
+import com.estore.repository.ProductRepository;
 import com.estore.service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.jetbrains.annotations.NotNull;
@@ -15,12 +17,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 /**
  * This class {@link ProductRestControllerTest} provides integration tests for the {@link ProductRestController} class,
@@ -37,6 +43,8 @@ public class ProductRestControllerTest {
 
     @Autowired
     private ProductService productService;
+    @Autowired
+    private ProductRepository productRepository;
     @Autowired
     private ObjectMapper objectMapper;
 
@@ -58,8 +66,11 @@ public class ProductRestControllerTest {
     @BeforeEach
     public void setup() {
         String localHost = "http://localhost:";
+        String username = "admin";
+        String password = "admin";
         webTestClient = WebTestClient.bindToServer()
                 .baseUrl(localHost + randomServerPort)
+                .filter(basicAuthentication(username, password))
                 .build();
     }
 
@@ -121,7 +132,7 @@ public class ProductRestControllerTest {
 
         webTestClient.get().uri(URI.concat("?name={name}"), name)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
 
@@ -148,7 +159,7 @@ public class ProductRestControllerTest {
 
         webTestClient.get().uri(URI.concat("/{id}"), NOT_EXISTED_ID)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     //-----------------------------------
@@ -165,6 +176,7 @@ public class ProductRestControllerTest {
                 .exchange()
                 .expectStatus().isCreated()
                 .expectBody(ProductResponseDto.class)
+                .value(product -> product.setId(null))
                 .value(product -> assertEquals(savedProduct, product));
 
         productService.findAll()
@@ -182,7 +194,7 @@ public class ProductRestControllerTest {
         webTestClient.post().uri(URI)
                 .bodyValue(existedProduct)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     //-----------------------------------
@@ -202,6 +214,7 @@ public class ProductRestControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody(ProductResponseDto.class)
+                .value(product -> product.setId(null))
                 .value(product -> assertEquals(updatedProduct, product));
 
         productService.findAll()
@@ -219,7 +232,7 @@ public class ProductRestControllerTest {
         webTestClient.put().uri(URI.concat("/{id}"), NOT_EXISTED_ID)
                 .bodyValue(productForUpdate)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     //-----------------------------------
@@ -264,7 +277,7 @@ public class ProductRestControllerTest {
 
         webTestClient.delete().uri(URI.concat("/{id}"), NOT_EXISTED_ID)
                 .exchange()
-                .expectStatus().is5xxServerError();
+                .expectStatus().isNotFound();
     }
 
     //-----------------------------------
@@ -273,9 +286,12 @@ public class ProductRestControllerTest {
 
     @NotNull
     private List<ProductResponseDto> saveToRepository(List<ProductRequestDto> productList) {
-        return productList.stream()
-                .map(p -> productService.create(p).block())
-                .toList();
+        return Objects.requireNonNull(Flux.fromIterable(productList)
+                .map(p -> new Product(null, p.getName(), p.getDescription(), p.getPrice()))
+                .flatMap(p -> productRepository.findByName(p.getName())
+                        .switchIfEmpty(Mono.defer(() -> productRepository.save(p))))
+                .map(p -> objectMapper.convertValue(p, ProductResponseDto.class))
+                .collectList().block());
     }
 
 }
