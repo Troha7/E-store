@@ -1,31 +1,134 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1" name="viewport">
-  <title>catalog</title>
-  <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
-        integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" rel="stylesheet">
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>catalog</title>
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+          integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" rel="stylesheet">
 </head>
 <body>
 <div th:insert="~{fragments/navbar :: navbar}"></div>
 
 <div class="wrapper-main">
-  <h2> Products: </h2>
-  <table class="info">
-    <tr>
-      <th>Name</th>
-      <th>Description</th>
-      <th>Price</th>
-    </tr>
-    <tr th:each="product: ${products}">
-      <td th:text="${product.name}">name</td>
-      <td th:text="${product.description}">description</td>
-      <td th:text="${product.price}">price</td>
-    </tr>
-  </table>
+
+    <br>
+    <h2 class="text-center">
+        Products
+        <div class="float-sm-start"
+             th:if="${#authentication != null && #strings.contains(#authentication.principal.authorities, 'ADMIN')}">
+            <a href="/catalog/addProduct" class="btn btn-primary active float-sm-start" role="button"
+               aria-pressed="true">+ PRODUCT</a>
+        </div>
+    </h2>
+
+    <div class="alert alert-danger" th:if="${err}">
+        <p th:text="${err}"> text </p>
+    </div>
+
+    <div class="d-flex">
+
+        <form class="form-inline" id="getForm">
+            <label for="productId">Find by ID
+                <input class="form-control" type="number" min="1" name="id" id="productId" th:value="${id}" required>
+            </label>
+            <button type="submit" class="btn btn-primary mb-2">Search</button>
+        </form>
+
+        <form class="form-inline" th:action="@{/catalog}" method="GET">
+            <label for="productId">Find by containing name
+                <input class="form-control" type="text" name="name" required>
+            </label>
+            <button type="submit" class="btn btn-primary mb-2">Search</button>
+            <a href="/catalog" class="btn btn-secondary mb-2" role="button" aria-pressed="true">Clear</a>
+        </form>
+
+    </div>
+
+    <table class="table table-striped table-sm">
+
+        <tr th:each="product: ${products}">
+            <td>
+                <form class="form-inline" th:id="${product.id}" th:action="@{/products/{id}(id=${product.id})}"
+                      th:object="${product}">
+                    <div class="form-group row">
+                        <div class="col-md-2">
+                            <label th:if="${products[0].equals(product)}">ID</label>
+                            <input class="form-control" id="id" type="text" name="id" th:value="${product.id}" readonly>
+                        </div>
+                        <div class="col-md-2">
+                            <label th:if="${products[0].equals(product)}"> Name</label>
+                            <input class="form-control" id="name" type="text" name="name"
+                                   th:value="${product.name}">
+                        </div>
+                        <div class="col-md-2">
+                            <label th:if="${products[0].equals(product)}"> Description</label>
+                            <input class="form-control" id="description" type="text" name="description"
+                                   th:value="${product.description}">
+                        </div>
+                        <div class="col-md-2">
+                            <label th:if="${products[0].equals(product)}"> Price</label>
+                            <input class="form-control" id="price" type="number" step="0.01" min="0" name="price"
+                                   th:value="${product.price}">
+                        </div>
+                    </div>
+                </form>
+            </td>
+
+            <td>
+                <form class="form-inline text-center" th:id="${product.id}" th:action="@{/catalog/addToOrder}"
+                      th:object="${orderItem}" method="POST">
+                    <input type="hidden" id="prodId" name="productId" th:value="${product.id}"/>
+                    <div class="d-flex align-items-center"
+                         th:if="${#authentication!=null && #strings.contains(#authentication.principal.authorities, 'USER')}">
+                        <div class="col-md-3">
+                            <label th:if="${products[0].equals(product)}">Quantity</label>
+                            <input class="form-control" id="quantity" type="number" min="1" th:value="1" name="quantity"
+                                   required>
+                        </div>
+                        <button class="btn btn-success col-md-5 mt-auto" type="submit"> Add to Cart</button>
+                    </div>
+                </form>
+            </td>
+
+            <div th:if="${#authentication!=null && #strings.contains(#authentication.principal.authorities, 'ADMIN')}">
+                <td>
+                    <label th:if="${products[0].equals(product)}"> <br> </label>
+                    <button class="btn btn-warning" th:onclick="'updateById(\'/products/' + ${product.id} + '\')'">
+                        Update
+                    </button>
+                </td>
+                <td>
+                    <label th:if="${products[0].equals(product)}"> <br> </label>
+                    <button class="btn btn-danger" th:onclick="'deleteById(\'/products/' + ${product.id} + '\')'">
+                        Delete
+                    </button>
+                </td>
+            </div>
+
+        </tr>
+    </table>
+
 </div>
 
 <div th:insert="~{fragments/footer :: footer}"></div>
+
+<script>
+    function getById(url, formId, inputId) {
+        var form = document.getElementById(formId);
+        var input = document.getElementById(inputId);
+
+        form.addEventListener("submit", function (event) {
+            event.preventDefault();
+            var id = input.value;
+            window.location.href = url + id;
+        });
+    }
+    getById("/catalog/", "getForm", "productId");
+</script>
+
+<script th:src="@{/js/deleteFunction.js}"></script>
+<script th:src="@{/js/updateFunction.js}"></script>
+
 </body>
 </html>
