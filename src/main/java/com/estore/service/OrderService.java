@@ -3,12 +3,13 @@ package com.estore.service;
 import com.estore.dto.request.OrderItemRequestDto;
 import com.estore.dto.request.OrderRequestDto;
 import com.estore.dto.response.OrderResponseDto;
+import com.estore.exception.ModelNotFoundException;
 import com.estore.mapper.OrderMapper;
 import com.estore.model.Order;
 import com.estore.model.OrderItem;
+import com.estore.model.OrderStatus;
 import com.estore.repository.OrderItemRepository;
 import com.estore.repository.OrderRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -16,9 +17,13 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.IntStream;
+
+import static com.estore.model.OrderStatus.ACCEPTED;
+import static com.estore.model.OrderStatus.CREATED;
 
 /**
  * {@link OrderService}
@@ -45,22 +50,52 @@ public class OrderService {
     @Transactional
     public Mono<OrderResponseDto> create(Long userId) {
         log.info("Start to create order");
-        return orderRepository.save(new Order(null, userId, LocalDate.now()))
+        return orderRepository.save(new Order(null, userId, LocalDate.now(), CREATED))
                 .map(orderMapper::toDto)
-                .doOnSuccess(o -> log.info("Order id={} have been created", o.getId()));
+                .doOnSuccess(o -> log.info("Order id={} have been CREATED", o.getId()));
+    }
+
+    /**
+     * Accept order for payment and create new Order
+     *
+     * @return the updated order with new status ACCEPTED
+     */
+    @Transactional
+    public Mono<OrderResponseDto> accept(OrderResponseDto orderDto) {
+        log.info("Start to accept order {}", orderDto);
+        if (orderDto.getTotalPrice().equals(BigDecimal.ZERO) || orderDto.getStatus() == ACCEPTED) {
+            throw new ModelNotFoundException("No products have been added to the order or order status is already ACCEPTED");
+        }
+        Order order = orderMapper.toModel(orderDto);
+        order.setStatus(ACCEPTED);
+        order.setDate(LocalDate.now());
+        return create(orderDto.getUserId())
+                .then(orderRepository.save(order))
+                .map(orderMapper::toDto)
+                .doOnSuccess(o -> log.info("Order id={} have been ACCEPTED", o.getId()));
     }
 
     /**
      * Add product and quantity in Order by order id
      *
-     * @param id                  order id
+     * @param orderId             order id
      * @param orderItemRequestDto order item to be saved
-     * @return the saved order item with related products
+     * @return the saved order with related products
      */
 
-    public Mono<OrderResponseDto> addProductByOrderId(Long id, OrderItemRequestDto orderItemRequestDto) {
-        return orderItemService.addProductByOrderId(id, orderItemRequestDto)
-                .then(findById(id));
+    public Mono<OrderResponseDto> addProductByOrderId(Long orderId, OrderItemRequestDto orderItemRequestDto) {
+        return orderItemService.addProductByOrderId(orderId, orderItemRequestDto)
+                .then(findById(orderId));
+    }
+
+    /**
+     * Remove a product from the order by id and product id.
+     *
+     * @param orderId   order id
+     * @param productId product id
+     */
+    public Mono<Void> removeProductFromOrderById(Long orderId, Long productId) {
+        return orderItemService.removeProductFromOrderById(orderId, productId);
     }
 
     /**
@@ -68,15 +103,32 @@ public class OrderService {
      *
      * @param id order id
      * @return Find order with the related products loaded
-     * @throws EntityNotFoundException Order with id wasn't found
+     * @throws ModelNotFoundException Order with id wasn't found
      */
     public Mono<OrderResponseDto> findById(Long id) {
         log.info("Start to find order by id={}", id);
         return orderRepository.findById(id)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Order id=" + id + " wasn't found")))
-                .doOnError(o -> log.warn("Order id=" + id + " wasn't found"))
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("Order id=" + id + " wasn't found")))
+                .doOnError(o -> log.info("Order id=" + id + " wasn't found"))
                 .flatMap(this::loadOrderRelations)
                 .doOnSuccess(o -> log.info("Order id={} have been found", o.getId()));
+    }
+
+    /**
+     * Find Orders by username and status
+     *
+     * @param username username
+     * @param status   order status
+     * @return Find all orders by username and status
+     * @throws ModelNotFoundException Orders whith status wasn't found for username
+     */
+    public Flux<OrderResponseDto> findAllOrderByUsernameAndStatus(String username, OrderStatus status) {
+        log.info("Start to find orders by username{} and status{}", username, status);
+        return orderRepository.findAllOrderByUsernameAndStatus(username, status)
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("Orders whith status=" + status + " wasn't found for username=" + username)))
+                .doOnError(o -> log.info("Orders whith status=" + status + " wasn't found for username=" + username))
+                .flatMap(this::loadOrderRelations)
+                .doOnSubscribe(o -> log.info("Orders by username{} and status{} have been found", username, status));
     }
 
     /**
@@ -92,18 +144,31 @@ public class OrderService {
     }
 
     /**
+     * Find all Orders by User id
+     *
+     * @param userId user id
+     * @return Find all orders by user id with the related products loaded
+     */
+    public Flux<OrderResponseDto> findAllByUserId(Long userId) {
+        log.info("Start to find all orders by userId={}", userId);
+        return orderRepository.findAllOrderByUserId(userId)
+                .flatMap(this::loadOrderRelations)
+                .doOnSubscribe(o -> log.info("All orders for username={} have been found", userId));
+    }
+
+    /**
      * Deletes order by id.
      * Also deletes all related order items.
      *
      * @param id Order id.
      * @return Mono<Void>
-     * @throws EntityNotFoundException if the order is not found.
+     * @throws ModelNotFoundException if the order is not found.
      */
     @Transactional
     public Mono<Void> deleteById(Long id) {
         log.info("Start to delete order by id={}", id);
         return orderRepository.findById(id)
-                .switchIfEmpty(Mono.error(new EntityNotFoundException("Order id=" + id + " wasn't found")))
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("Order id=" + id + " wasn't found")))
                 .flatMap(orderRepository::delete)
                 .doOnSuccess(o -> log.info("Order id={} has been deleted", id));
     }
@@ -153,6 +218,13 @@ public class OrderService {
                 .doOnSuccess(o -> log.info("Order has been updated"));
     }
 
+    public BigDecimal getTotalPrice(OrderResponseDto order) {
+        return order.getOrderItems().stream()
+                .map(item -> item.getProduct().getPrice()
+                        .multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+    }
+
     //-----------------------------------
     //         Private methods
     //-----------------------------------
@@ -166,9 +238,10 @@ public class OrderService {
     private Mono<OrderResponseDto> loadOrderRelations(Order order) {
         return orderItemService.findAllOrderItemsWithProductsByOrderId(order.getId()).collectList()
                 .map(orderItems -> {
-                    OrderResponseDto orderWithProducts = orderMapper.toDto(order);
-                    orderWithProducts.setOrderItems(orderItems);
-                    return orderWithProducts;
+                    var orderResponseDto = orderMapper.toDto(order);
+                    orderResponseDto.setOrderItems(orderItems);
+                    orderResponseDto.setTotalPrice(getTotalPrice(orderResponseDto));
+                    return orderResponseDto;
                 });
     }
 
@@ -180,8 +253,8 @@ public class OrderService {
      * @return the saved order
      */
     private Mono<Order> saveOrderById(Long id, OrderRequestDto orderRequestDto) {
-        return Mono.just(orderMapper.toModel(orderRequestDto))
-                .doOnNext(order -> order.setId(id))
+        return orderRepository.findById(id)
+                .doOnNext(order -> order.setDate(orderRequestDto.getDate()))
                 .flatMap(orderRepository::save);
     }
 
@@ -235,13 +308,12 @@ public class OrderService {
      *
      * @param id Order id.
      * @return True if the order exists.
-     * @throws IllegalArgumentException If the Order id is null or not found in the repository.
+     * @throws ModelNotFoundException If the Order id is null or not found in the repository.
      */
     private Mono<Boolean> existsOrderById(Long id) {
         return orderRepository.existsById(id)
                 .filter(exist -> exist)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException
-                        ("Order id=" + id + " does not exist in repository")));
+                .switchIfEmpty(Mono.error(new ModelNotFoundException("Order id=" + id + " does not exist in repository")));
     }
 
     /**
@@ -249,7 +321,7 @@ public class OrderService {
      *
      * @param orderItemDtos List of OrderItemRequestDto.
      * @return True if all the product IDs exist.
-     * @throws IllegalArgumentException If any of the product IDs in the Order are null or not found in the repository.
+     * @throws ModelNotFoundException If any of the product IDs in the Order are null or not found in the repository.
      */
     private Mono<Boolean> existsProductsInList(List<OrderItemRequestDto> orderItemDtos) {
         List<Long> productIds = orderItemDtos.stream()
@@ -257,7 +329,7 @@ public class OrderService {
                 .toList();
         return productService.existsProductByIdIn(productIds)
                 .filter(exists -> exists)
-                .switchIfEmpty(Mono.error(new IllegalArgumentException
+                .switchIfEmpty(Mono.error(new ModelNotFoundException
                         ("Some Product ides: " + productIds + " does not exist in repository")));
     }
 
