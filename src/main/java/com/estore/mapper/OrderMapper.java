@@ -19,6 +19,7 @@ public interface OrderMapper {
     @Mapping(target = "orderItems", ignore = true)
     OrderResponseDto toDto(Order order);
 
+    @Mapping(target = "status", ignore = true)
     @Mapping(target = "userId", ignore = true)
     @Mapping(target = "id", ignore = true)
     Order toModel(OrderRequestDto orderRequestDto);
