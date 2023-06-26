@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>about</title>
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+          integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}" type="text/css"/>
+</head>
+
+<body>
+<div th:insert="~{fragments/navbar :: navbar}"></div>
+<div class="page-content">
+    <h1 class="text-center"> About project </h1>
+    <p class="text">
+        This project is a fully reactive application with Spring Boot, Spring Webflux, Spring Security, PostgreSQL,
+        Spring Data R2DBC, Flyway and Thymeleaf.
+    </p>
+    <p class="text">
+        This project tests API endpoints using a PostgreSQL test Docker container.
+    </p>
+</div>
+<div th:insert="~{fragments/footer :: footer}"></div>
+</body>
+</html>
