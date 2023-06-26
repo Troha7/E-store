@@ -1,16 +1,17 @@
 <!DOCTYPE html>
-<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns="http://www.w3.org/1999/html">
 <head>
     <meta charset="utf-8">
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <title>catalog</title>
     <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
           integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}" type="text/css"/>
 </head>
 <body>
 <div th:insert="~{fragments/navbar :: navbar}"></div>
 
-<div class="wrapper-main">
+<div class="page-content">
 
     <br>
     <h2 class="text-center">
@@ -58,18 +59,22 @@
                         </div>
                         <div class="col-md-2">
                             <label th:if="${products[0].equals(product)}"> Name</label>
-                            <input class="form-control" id="name" type="text" name="name"
-                                   th:value="${product.name}">
+                            <input class="form-control" id="name" type="text" name="name" th:value="${product.name}">
                         </div>
                         <div class="col-md-2">
                             <label th:if="${products[0].equals(product)}"> Description</label>
                             <input class="form-control" id="description" type="text" name="description"
                                    th:value="${product.description}">
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label th:if="${products[0].equals(product)}"> Price</label>
-                            <input class="form-control" id="price" type="number" step="0.01" min="0" name="price"
-                                   th:value="${product.price}">
+                            <div class="input-group">
+                                <input class="form-control" id="price" type="number" step="0.01" min="0" name="price"
+                                       th:value="${product.price}">
+                                <div class="input-group-append">
+                                    <span class="input-group-text" th:text="#{app.money.currency}">$</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </form>
