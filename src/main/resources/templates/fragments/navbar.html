@@ -9,14 +9,18 @@
 <div th:fragment="navbar">
 
   <nav class="navbar navbar-expand-lg navbar-light bg-primary">
+    <a class="navbar-brand" href="/about">
+      <img th:src="@{/img/reactive.png}" width="90" height="90" class="d-inline-block align-top" alt="">
+    </a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav">
-        <a class="nav-item nav-link" href="/">Home</a>
-        <a class="nav-item nav-link" href="/catalog">Catalog</a>
-        <a class="nav-item nav-link" href="/cart">Cart</a>
+        <a class="nav-item nav-link" href="/" style="font-size: 25px;">Home</a>
+        <a class="nav-item nav-link" href="/catalog" style="font-size: 25px;">Catalog</a>
+        <a class="nav-item nav-link" href="/cart" style="font-size: 25px;">Cart</a>
+        <a class="nav-item nav-link" href="/about" style="font-size: 25px;">About</a>
       </div>
 
       <div class="navbar-nav" th:if="${#authentication!=null && #strings.contains(#authentication.principal.authorities, 'ADMIN')}">
@@ -25,8 +29,11 @@
 
     </div>
 
-    <div>
-      <p>Hello <span th:remove="tag" sec:authentication="name">Anonimus</span>!</p>
+    <div style="display: flex; align-items: center;">
+      <a class="navbar-brand" href="/account" style="display: flex; flex-direction: column; align-items: center;">
+        <img th:src="@{/img/account.png}" width="30" height="30" class="d-inline-block align-top" alt="">
+        <p><span th:remove="tag" sec:authentication="name">Anonimus</span></p>
+      </a>
       <form class="form-group" th:action="@{/logout}" method="POST">
         <button type="submit" class="btn btn-outline-light" th:text="${#authentication==null ? 'Sign In' : 'Sign Out'}"></button>
       </form>
