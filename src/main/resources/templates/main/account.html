@@ -15,42 +15,60 @@
 
     <h2 class="text-center"> Account </h2>
 
-    <form class="form-group" th:action="@{/users/{id}(id=${user.id})}"
-          th:object="${user}">
-            <div class="col-md-1">
-                <label>ID</label>
-                <input class="form-control" id="id" type="text" name="id" th:value="${user.id}" readonly>
+    <div class="row">
+        <div class="col-md-6">
+            <form class="form-group" th:id="${user.id}" th:action="@{/users/{id}(id=${user.id})}" th:object="${user}">
+                <input type="hidden" name="id" th:value="${user.id}">
+                <input type="hidden" name="username" th:value="${user.username}">
+                <input type="hidden" name="password" th:value="${user.password}">
+                <div class="col-md-12">
+                    <label>First name</label>
+                    <input class="form-control" id="first-name" type="text" name="firstName" th:value="${user.firstName}">
+                </div>
+                <div class="col-md-12">
+                    <label>Last name</label>
+                    <input class="form-control" id="last-name" type="text" name="lastName" th:value="${user.lastName}">
+                </div>
+                <div class="col-md-12">
+                    <label>Email</label>
+                    <input class="form-control" id="email" type="email" name="email" th:value="${user.email}">
+                </div>
+                <div class="col-md-12">
+                    <label>Phone</label>
+                    <input class="form-control" id="phone" type="text" name="phone" th:value="${user.phone}">
+                </div>
+                <input class="form-control" type="hidden" name="role" th:value="${user.role}">
+            </form>
+        </div>
+        <div class="col-md-6">
+            <div>
+                <div class="col-md-12">
+                    <label>City</label>
+                    <input class="form-control" type="text" name="city" th:value="${user.address.city}" readonly>
+                </div>
+                <div class="col-md-12">
+                    <label>Street</label>
+                    <input class="form-control" type="text" name="street" th:value="${user.address.street}" readonly>
+                </div>
+                <div class="col-md-12">
+                    <label>House</label>
+                    <input class="form-control" type="text" name="house" th:value="${user.address.house}" readonly>
+                </div>
             </div>
-            <div class="col-md-1">
-                <label>Username</label>
-                <input class="form-control" id="username" type="text" name="username"
-                       th:value="${user.username}">
-            </div>
-            <input type="hidden" name="password" th:value="${user.password}">
-            <div class="col-md-2">
-                <label>First name</label>
-                <input class="form-control" id="first-name" type="text" name="firstName"
-                       th:value="${user.firstName}">
-            </div>
-            <div class="col-md-2">
-                <label>Last name</label>
-                <input class="form-control" id="last-name" type="text" name="lastName"
-                       th:value="${user.lastName}">
-            </div>
-            <div class="col-md-3">
-                <label>Email</label>
-                <input class="form-control" id="email" type="email" name="email" th:value="${user.email}">
-            </div>
-            <div class="col-md-2">
-                <label>Phone</label>
-                <input class="form-control" id="phone" type="text" name="phone" th:value="${user.phone}">
-            </div>
-    </form>
+            <br>
+            <a class="btn btn-outline-secondary active" role="button"
+               aria-pressed="true" href="/address" >
+                <img th:src="@{/img/address.png}" width="25" height="25" class="d-inline-block align-top" alt="">
+                + Address
+            </a>
+        </div>
+    </div>
+    <br>
+    <button class="btn btn-warning" th:onclick="'updateById(\'/users/' + ${user.id} + '\')'"> Update</button>
+    <div>
 
-    <label><br></label>
-    <button class="btn btn-primary" th:onclick="'updateById(\'/users/' + ${user.id} + '\')'"> Update
-    </button>
-
+    </div>
+    </div>
 </div>
 
 <div th:insert="~{fragments/footer :: footer}"></div>
