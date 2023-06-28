@@ -27,7 +27,7 @@ public class AddressRequestDto {
     private String street;
 
     @NotNull(message = "{field.err.null}")
-    @Size(min = 3, max = 5, message = "{field.err.size}")
+    @Size(min = 1, max = 5, message = "{field.err.size}")
     private String house;
 
 }
