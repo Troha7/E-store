@@ -28,7 +28,8 @@ public class WebSecurityConfig {
 
     private final ReactiveUserDetailsService reactiveUserDetailsService;
 
-    private static final String[] WHITELIST_URLS = {"/", "/catalog", "/webjars/swagger-ui/**", "/bus/v3/api-docs/**"};
+    private static final String[] WHITELIST_URLS =
+            {"/", "/catalog", "/about", "/webjars/swagger-ui/**", "/bus/v3/api-docs/**", "/css/**", "/img/**"};
 
     /**
      * Password encoder bean is designed to password encryption
@@ -53,13 +54,11 @@ public class WebSecurityConfig {
                 .authenticationManager(authenticationManager)
                 .authorizeExchange()
                 .pathMatchers(WHITELIST_URLS).permitAll()
-                .pathMatchers("/login", "/registration").permitAll()
-                .pathMatchers( "/admin/**", "/catalog/addProduct/**").hasAuthority("ADMIN")
+                .pathMatchers("/login/**", "/registration").permitAll()
+                .pathMatchers("/admin/**", "/catalog/addProduct/**").hasAuthority("ADMIN")
                 .pathMatchers(HttpMethod.DELETE, "/products/**").hasAuthority("ADMIN")
                 .pathMatchers(HttpMethod.PUT, "/products/**").hasAuthority("ADMIN")
                 .anyExchange().authenticated()
-                .and()
-                .httpBasic()
                 .and()
                 .formLogin()
                 .loginPage("/login")
