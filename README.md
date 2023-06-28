@@ -2,8 +2,8 @@
 
 # Reactive E-Store App with PostgreSQL and Spring Data R2DBC
 
-This project is a fully reactive application with **Spring Boot**, **Spring Webflux**, **PostgreSQL**, 
-**Spring Data R2DBC** and **Flyway**.
+This project is a fully Reactive application with **Spring Boot**, **Spring Webflux**, **Spring Security**, **PostgreSQL**, 
+**Spring Data R2DBC**, **Flyway**, **Thymeleaf (HTML, CSS)**, **Bootstrap**, **JavaScript (a little)**.
 
 This project tests API endpoints using a **PostgreSQL** test **Docker container**.
 
@@ -21,9 +21,40 @@ In order to build the application you need to have the following software produc
 - JDK >= 17
 - Docker & Docker Compose
 
-### Database Entity Diagram
+### How to login as Superuser
 
+- Username -> admin
+- Password -> admin
+
+### Database Entity Diagram
 ![e_store_SQL](readme_img/e_store_SQL_table.png)
+
+### Products landing page
+![Home](readme_img/home.png)
+
+### Add product
+![Add_product](readme_img/add_product.png)
+
+### Shopping cart
+![Cart](readme_img/cart.png)
+
+### Admin panel
+![Admin](readme_img/admin.png)
+
+### Account
+![Account](readme_img/account.png)
+
+### Address
+![Address](readme_img/address.png)
+
+### Login
+![Login](readme_img/login.png)
+
+### Registration
+![Registr](readme_img/registration.png)
+
+### Errors handling
+![Err](readme_img/products_err.png)
 
 ### Exploring the Rest APIs
 
