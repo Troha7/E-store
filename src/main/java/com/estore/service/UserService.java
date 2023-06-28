@@ -113,7 +113,7 @@ public class UserService {
         return userRepository.findByUsername(username)
                 .switchIfEmpty(Mono.error(new ModelNotFoundException("Username=" + username + " wasn't found")))
                 .doOnError(user -> log.warn("Username=" + username + " wasn't found"))
-                .map(userMapper::toUser)
+                .flatMap(this::loadAddress)
                 .doOnSuccess(user -> log.info("User id={} have been found", user.getId()));
     }
 
