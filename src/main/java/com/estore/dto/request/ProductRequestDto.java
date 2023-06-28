@@ -29,6 +29,7 @@ public class ProductRequestDto {
     @Size(min = 3, max = 64, message = "{field.err.size}")
     private String description;
 
+    @NotNull(message = "{field.err.null}")
     @DecimalMin(value = "0.0", inclusive = false, message = "{field.err.decimal.min}")
     @Digits(integer = 6, fraction = 2, message = "{field.err.decimal.digits}")
     private BigDecimal price;
