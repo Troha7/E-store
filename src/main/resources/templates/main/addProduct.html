@@ -1,42 +1,55 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="utf-8">
-  <meta content="width=device-width, initial-scale=1" name="viewport">
-  <title>Add product</title>
-  <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
-        integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" rel="stylesheet">
-  <link rel="stylesheet" th:href="@{/css/main.css}" type="text/css"/>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Add product</title>
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"
+          integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/main.css}" type="text/css"/>
 </head>
 <body>
 <div th:insert="~{fragments/navbar :: navbar}"></div>
 
 <div class="page-content">
 
-  <h2> Add product </h2>
+    <h2> Add product </h2>
 
-  <form class="form-group" th:action="@{/catalog/addProduct}" th:object="${productDto}" method="POST">
-    <div>
-      <label for="name"> Name
-        <input class="form-control" id="name" placeholder="Enter name" type="text" th:field="*{name}"/>
-      </label>
-      <small class="form-text text-muted" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></small>
+    <div class="alert alert-danger" th:if="${err}">
+        <p th:text="${err}"> text </p>
     </div>
-    <div>
-      <label for="description"> Description
-        <input class="form-control" id="description" placeholder="Enter description" type="text" th:field="*{description}"/>
-      </label>
-      <small class="form-text text-muted" th:if="${#fields.hasErrors('description')}" th:errors="*{description}"></small>
-    </div>
-    <div>
-      <label for="price"> Price
-        <input class="form-control" id="price" placeholder="Enter price" type="number" step="0.01" min="0" th:field="*{price}"/>
-      </label>
-      <small class="form-text text-muted" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></small>
-    </div>
-    <br>
-    <button type="submit" class="btn btn-primary">Add</button>
-  </form>
+
+    <form class="form-group" th:action="@{/addProduct}" th:object="${productDto}" method="POST">
+        <div>
+            <label for="name"> Name
+                <input class="form-control" id="name" placeholder="Enter name" type="text" th:field="*{name}"/>
+            </label>
+            <small class="form-text text-muted" th:if="${#fields.hasErrors('name')}" th:errors="*{name}"></small>
+        </div>
+        <div>
+            <label for="description"> Description
+                <input class="form-control" id="description" placeholder="Enter description" type="text"
+                       th:field="*{description}"/>
+            </label>
+            <small class="form-text text-muted" th:if="${#fields.hasErrors('description')}"
+                   th:errors="*{description}"></small>
+        </div>
+        <div class="col-md-3">
+            <label for="price"> Price </label>
+            <div class="input-group">
+                <input class="form-control" id="price" placeholder="Enter price" type="number" step="0.01" min="0"
+                       th:field="*{price}"/>
+                <div class="input-group-append">
+                    <span class="input-group-text" th:text="#{app.money.currency}">$</span>
+                </div>
+                <div class="input-group-append">
+                    <small class="form-text text-muted" th:if="${#fields.hasErrors('price')}" th:errors="*{price}"></small>
+                </div>
+            </div>
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">Add</button>
+    </form>
 
 </div>
 

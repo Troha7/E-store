@@ -26,7 +26,7 @@
                             <label th:if="${users[0].equals(user)}">ID</label>
                             <input class="form-control" id="id" type="text" name="id" th:value="${user.id}" readonly>
                         </div>
-                        <div class="col-md-1">
+                        <div class="col-md-2">
                             <label th:if="${users[0].equals(user)}">Username</label>
                             <input class="form-control" id="username" type="text" name="username"
                                    th:value="${user.username}">
@@ -42,7 +42,7 @@
                             <input class="form-control" id="last-name" type="text" name="lastName"
                                    th:value="${user.lastName}">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label th:if="${users[0].equals(user)}">Email</label>
                             <input class="form-control" id="email" type="email" name="email" th:value="${user.email}">
                         </div>
@@ -65,12 +65,12 @@
             </td>
             <td>
                 <label th:if="${users[0].equals(user)}"><br></label>
-                <button class="btn btn-primary" th:onclick="'updateById(\'/users/' + ${user.id} + '\')'"> Update
+                <button class="btn btn-warning" th:onclick="'updateById(\'/users/' + ${user.id} + '\')'"> Update
                 </button>
             </td>
             <td>
                 <label th:if="${users[0].equals(user)}"><br></label>
-                <button class="btn btn-primary" th:onclick="'deleteById(\'/users/' + ${user.id} + '\')'"> Delete
+                <button class="btn btn-danger" th:onclick="'deleteById(\'/users/' + ${user.id} + '\')'"> Delete
                 </button>
             </td>
         </tr>
