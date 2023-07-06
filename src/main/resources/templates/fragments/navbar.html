@@ -1,57 +1,61 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.w3.org/1999/xhtml">
 <head>
-  <meta charset="UTF-8">
-  <title>Navbar</title>
+    <meta charset="UTF-8">
+    <title>Navbar</title>
 </head>
 <body>
 
 <div th:fragment="navbar">
 
-  <nav class="navbar navbar-expand-lg navbar-light bg-primary">
-    <a class="navbar-brand" href="/about">
-      <img th:src="@{/img/reactive.png}" width="100" height="100" class="d-inline-block align-top" alt="">
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
-        <a class="nav-item nav-link" href="/" style="font-size: 25px;">
-          <img th:src="@{/img/home.png}" width="30" height="30" class="d-inline-block align-top" alt="">
-          Home
-        </a>
-        <a class="nav-item nav-link" href="/cart" style="font-size: 25px;">
-          <img th:src="@{/img/cart.png}" width="40" height="40" class="d-inline-block align-top" alt="">
-          Cart
-        </a>
+    <nav class="navbar navbar-expand-lg navbar-light bg-primary">
+        <div class="container-fluid">
 
-      <div class="navbar-nav" th:if="${#authentication!=null && #strings.contains(#authentication.principal.authorities, 'ADMIN')}">
-        <a class="nav-item nav-link" href="/admin" style="font-size: 25px;">
-          <img th:src="@{/img/admin.png}" width="33" height="33" class="d-inline-block align-top" alt="">
-          Admin panel
-        </a>
-      </div>
+            <a class="navbar-brand" href="/about">
+                <img th:src="@{/img/reactive.png}" width="100" height="100" class="d-inline-block align-top" alt="">
+            </a>
 
-        <a class="nav-item nav-link" href="/about" style="font-size: 25px;">
-          <img th:src="@{/img/about.png}" width="30" height="30" class="d-inline-block align-top" alt="">
-          About
-        </a>
-      </div>
+            <div class="navbar-nav mr-auto">
+                <a class="nav-item nav-link" href="/" style="font-size: 25px;">
+                    <img th:src="@{/img/home.png}" width="30" height="30" class="d-inline-block align-top" alt="">
+                    Home
+                </a>
+            </div>
+            <div class="navbar-nav mr-auto">
+                <a class="nav-item nav-link" href="/cart" style="font-size: 25px;">
+                    <img th:src="@{/img/cart.png}" width="40" height="40" class="d-inline-block align-top" alt="">
+                    Cart
+                </a>
+            </div>
 
-    </div>
+            <div class="navbar-nav"
+                 th:if="${#authentication!=null && #strings.contains(#authentication.principal.authorities, 'ADMIN')}">
+                <a class="nav-item nav-link" href="/admin" style="font-size: 25px;">
+                    <img th:src="@{/img/admin.png}" width="33" height="33" class="d-inline-block align-top" alt="">
+                    Admin panel
+                </a>
+            </div>
+            <div class="navbar-nav mr-auto">
+                <a class="nav-item nav-link" href="/about" style="font-size: 25px;">
+                    <img th:src="@{/img/about.png}" width="30" height="30" class="d-inline-block align-top" alt="">
+                    About
+                </a>
+            </div>
 
-    <div style="display: flex; align-items: center;">
-      <a th:if="${#authentication!=null}" class="navbar-brand" href="/account" style="display: flex; flex-direction: column; align-items: center;">
-        <img th:src="@{/img/account.png}" width="30" height="30" class="d-inline-block align-top" alt="">
-        <p><span th:remove="tag" sec:authentication="name">User</span></p>
-      </a>
-      <form class="form-group" th:action="@{/logout}" method="POST">
-        <button type="submit" class="btn btn-outline-light" th:text="${#authentication==null ? 'Sign In' : 'Sign Out'}"></button>
-      </form>
-    </div>
+            <div class="d-flex justify-content-end">
+                <a th:if="${#authentication!=null}" class="navbar-brand" href="/account"
+                   style="display: flex; flex-direction: column; align-items: center;">
+                    <img th:src="@{/img/account.png}" width="30" height="30" class="d-inline-block align-top" alt="">
+                    <p><span th:remove="tag" sec:authentication="name">User</span></p>
+                </a>
+                <form class="form-group" th:action="@{/logout}" method="POST">
+                    <button type="submit" class="btn btn-outline-light"
+                            th:text="${#authentication==null ? 'Sign In' : 'Sign Out'}"></button>
+                </form>
+            </div>
+        </div>
 
-  </nav>
+    </nav>
 
 </div>
 
