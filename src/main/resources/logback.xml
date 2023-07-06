@@ -7,14 +7,14 @@
     <include resource="org/springframework/boot/logging/logback/default.xml"/>
     <include resource="org/springframework/boot/logging/logback/console-appender.xml" />
 
-    <!--  В консоль -->
+    <!--  Write to console -->
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{DD/MM/YYYY HH:mm:ss.SSS} | %-10.10thread | %5p | %-36.36logger{36} | %m%n</pattern>
+            <pattern>%d{dd/MM/YYYY HH:mm:ss.SSS} | %-11.11thread | %5p | %-36.36logger{36} | %m%n</pattern>
         </encoder>
     </appender>
 
-    <!--  В файл -->
+    <!--  Write to file -->
     <property name="LOG_DIR" value="./log" />
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
         <file>${LOG_DIR}/eStore.log</file>
