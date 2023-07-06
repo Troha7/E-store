@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -32,7 +33,6 @@ import java.util.stream.IntStream;
 import static com.estore.model.OrderStatus.CREATED;
 import static com.estore.model.UserRole.USER;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 /**
  * This class {@link OrderRestControllerTest} provides integration tests for the {@link OrderRestController} class,
@@ -80,11 +80,8 @@ public class OrderRestControllerTest {
     @BeforeEach
     public void setup() {
         String localHost = "http://localhost:";
-        String username = "admin";
-        String password = "admin";
         webTestClient = WebTestClient.bindToServer()
                 .baseUrl(localHost + randomServerPort)
-                .filter(basicAuthentication(username, password))
                 .build();
 
         saveProductsIfNotExist(products);
@@ -100,6 +97,7 @@ public class OrderRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithMockUser
     void shouldReturnEmptyListOfAllOrders() {
 
         webTestClient.get().uri(URI)
@@ -110,6 +108,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldReturnAllOrdersWithProducts() {
 
         int ordersNum = 3;
@@ -126,6 +125,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldReturnOrderById() {
 
         var savedOrderWithProducts = createOrdersWithProducts(3).get(0);
@@ -139,6 +139,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionIfOrderIdDoesNotExist() {
 
         webTestClient.get().uri(URI.concat("/{id}"), NOT_EXISTED_ORDER_ID)
@@ -151,6 +152,7 @@ public class OrderRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithMockUser
     void shouldCreatedNewOrder() {
         var user = new UserEntity(null, "User1", "1234", USER, "First", "Last", "user1@gmail.com", "+380991111111");
 
@@ -176,6 +178,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldAddedProductToOrderById() {
 
         var savedOrder = orderService.create(USER_ID).block();
@@ -201,6 +204,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldSummarizingQuantityWhenAddedProductToOrderById() {
 
         OrderResponseDto orderWithProducts = orderService.create(USER_ID)
@@ -231,6 +235,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionIfAddedProductIdDoesNotExist() {
 
         var savedOrder = orderService.create(USER_ID).block();
@@ -246,6 +251,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionAddedProductIfOrderIdDoesNotExist() {
 
         orderService.create(USER_ID).block();
@@ -261,6 +267,7 @@ public class OrderRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithMockUser
     void shouldUpdatedExistingOrder() {
 
         var savedOrderWithProducts = createOrdersWithProducts(3).get(0);
@@ -288,6 +295,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionUpdatedOrderIdDoesNotExist() {
 
         var orderForUpdate = new OrderRequestDto(LocalDate.now(), orderItems.subList(0, 1));
@@ -299,6 +307,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionUpdatedOrderIfProductHasDuplicate() {
 
         var savedOrderWithProducts = createOrdersWithProducts(3).get(0);
@@ -314,6 +323,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionUpdatedOrderIfProductQuantityBelowZero() {
 
         var savedOrderWithProducts = createOrdersWithProducts(3).get(0);
@@ -329,6 +339,7 @@ public class OrderRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionUpdatedOrderIfProductDoesNotExist() {
 
         var savedOrderWithProducts = createOrdersWithProducts(3).get(0);

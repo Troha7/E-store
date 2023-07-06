@@ -16,6 +16,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,7 +28,6 @@ import java.util.List;
 import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 /**
  * This class {@link ProductRestControllerTest} provides integration tests for the {@link ProductRestController} class,
@@ -66,11 +67,8 @@ public class ProductRestControllerTest {
     @BeforeEach
     public void setup() {
         String localHost = "http://localhost:";
-        String username = "admin";
-        String password = "admin";
         webTestClient = WebTestClient.bindToServer()
                 .baseUrl(localHost + randomServerPort)
-                .filter(basicAuthentication(username, password))
                 .build();
     }
 
@@ -84,6 +82,7 @@ public class ProductRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithMockUser
     void shouldReturnEmptyListOfAllProducts() {
 
         webTestClient.get().uri(URI)
@@ -94,6 +93,7 @@ public class ProductRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldReturnAllProducts() {
 
         var savedProducts = saveToRepository(products);
@@ -109,10 +109,11 @@ public class ProductRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldReturnAllProductsByContainingName() {
 
         var savedProducts = saveToRepository(products);
-        String name = "TV";
+        String name = "lap";
 
         webTestClient.get().uri(URI.concat("?name={name}"), name)
                 .exchange()
@@ -120,11 +121,12 @@ public class ProductRestControllerTest {
                 .expectBodyList(ProductResponseDto.class)
                 .value(productList -> {
                     assertEquals(1, productList.size());
-                    assertIterableEquals(savedProducts.subList(2, 3), productList);
+                    assertIterableEquals(savedProducts.subList(0, 1), productList);
                 });
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionIfProductDoesNotContainsName() {
 
         saveToRepository(products);
@@ -137,6 +139,7 @@ public class ProductRestControllerTest {
 
 
     @Test
+    @WithMockUser
     void shouldReturnProductById() {
 
         var savedProducts = saveToRepository(products);
@@ -153,6 +156,7 @@ public class ProductRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionIfProductIdDoesNotExist() {
 
         saveToRepository(products);
@@ -167,6 +171,7 @@ public class ProductRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithMockUser
     void shouldCreatedNewProduct() {
         var newProduct = new ProductRequestDto("newProduct", "new", BigDecimal.ONE);
         var savedProduct = objectMapper.convertValue(newProduct, ProductResponseDto.class);
@@ -186,6 +191,7 @@ public class ProductRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionIfProductNameAlreadyExist() {
 
         saveToRepository(products);
@@ -202,6 +208,7 @@ public class ProductRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithUserDetails("admin")
     void shouldUpdatedExistingProduct() {
 
         List<ProductResponseDto> savedProducts = saveToRepository(products);
@@ -224,6 +231,7 @@ public class ProductRestControllerTest {
     }
 
     @Test
+    @WithUserDetails("admin")
     void shouldThrowExceptionIfUpdatedProductIdDoesNotExist() {
 
         saveToRepository(products);
@@ -240,6 +248,7 @@ public class ProductRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithUserDetails("admin")
     void shouldDeleteAllProducts() {
 
         saveToRepository(products);
@@ -256,6 +265,7 @@ public class ProductRestControllerTest {
     }
 
     @Test
+    @WithUserDetails("admin")
     void shouldDeleteProductById() {
 
         List<ProductResponseDto> savedProducts = saveToRepository(products);
@@ -273,6 +283,7 @@ public class ProductRestControllerTest {
     }
 
     @Test
+    @WithUserDetails("admin")
     void shouldThrowExceptionIfDeletedProductIdDoesNotExist() {
 
         webTestClient.delete().uri(URI.concat("/{id}"), NOT_EXISTED_ID)

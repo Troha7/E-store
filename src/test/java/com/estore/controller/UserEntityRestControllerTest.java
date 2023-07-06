@@ -18,6 +18,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.test.StepVerifier;
 
@@ -26,7 +27,6 @@ import java.util.stream.IntStream;
 
 import static com.estore.model.UserRole.USER;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.web.reactive.function.client.ExchangeFilterFunctions.basicAuthentication;
 
 /**
  * This class {@link UserEntityRestControllerTest} provides integration tests for the {@link UserRestController} class,
@@ -70,11 +70,8 @@ public class UserEntityRestControllerTest {
     @BeforeEach
     public void setup() {
         String localHost = "http://localhost:";
-        String username = "admin";
-        String password = "admin";
         webTestClient = WebTestClient.bindToServer()
                 .baseUrl(localHost + randomServerPort)
-                .filter(basicAuthentication(username, password))
                 .build();
     }
 
@@ -88,6 +85,7 @@ public class UserEntityRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithMockUser
     void shouldReturnEmptyListOfAllUsers() {
 
         webTestClient.get().uri(URI)
@@ -98,6 +96,7 @@ public class UserEntityRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldReturnAllUsersWithAddress() {
         int usersNum = 3;
         List<UserResponseDto> savedUsers = createUsersWithAddress(3);
@@ -113,6 +112,7 @@ public class UserEntityRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldReturnUserById() {
 
         var savedUser = createUsersWithAddress(3).get(0);
@@ -126,6 +126,7 @@ public class UserEntityRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldReturnUserWithOrdersHistoryById() {
 
         var savedUser = createUserWithOrder();
@@ -140,6 +141,7 @@ public class UserEntityRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionIfUserIdDoesNotExist() {
 
         webTestClient.get().uri(URI.concat("/{id}"), NOT_EXISTED_USER_ID)
@@ -152,6 +154,7 @@ public class UserEntityRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithMockUser
     void shouldCreatedNewUser() {
 
         var newUser = users.get(0);
@@ -177,6 +180,7 @@ public class UserEntityRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldAddedAddressByUserId() {
 
         var expectedUser = userService.createUser(users.get(0)).block();
@@ -194,6 +198,7 @@ public class UserEntityRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldUpdatedAddressByUserIdIfAddressExist() {
 
         var expectedUser = createUsersWithAddress(1).get(0);
@@ -210,6 +215,7 @@ public class UserEntityRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionIfAddedAddressByUserIdDoesNotExist() {
 
         createUsersWithAddress(1);
@@ -225,6 +231,7 @@ public class UserEntityRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithMockUser
     void shouldUpdatedExistingUserById() {
 
         var expectedUser = userService.createUser(users.get(0)).block();
@@ -249,6 +256,7 @@ public class UserEntityRestControllerTest {
     }
 
     @Test
+    @WithMockUser
     void shouldThrowExceptionIfUpdatedUserByIdDoesNotExist() {
 
         userService.createUser(users.get(0)).block();
@@ -266,6 +274,7 @@ public class UserEntityRestControllerTest {
     //-----------------------------------
 
     @Test
+    @WithMockUser
     void shouldDeleteUserByIdAndAllUserRelations() {
 
         var expectedUser = createUsersWithAddress(1).get(0);
