@@ -3,9 +3,12 @@
 # Reactive E-Store App with PostgreSQL and Spring Data R2DBC
 
 This project is a fully Reactive application with **Spring Boot**, **Spring Webflux**, **Spring Security**, **PostgreSQL**, 
-**Spring Data R2DBC**, **Flyway**, **Thymeleaf (HTML, CSS)**, **Bootstrap**, **JavaScript (a little)**.
+**Spring Data R2DBC**, **Flyway**, **Thymeleaf (HTML, CSS)**, **Bootstrap** and **JavaScript (a little)**.
 
-This project tests API endpoints using a **PostgreSQL** test **Docker container**.
+The project includes API endpoint testing using a **PostgreSQL** test **Docker container**.
+
+It is deployed on **AWS Elastic Beanstalk** and can be accessed at the following URL:
+http://estore.us-east-1.elasticbeanstalk.com/
 
 ### Project structure
 
