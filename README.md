@@ -7,7 +7,7 @@ This project is a fully Reactive application with **Spring Boot**, **Spring Webf
 
 The project includes API endpoint testing using a **PostgreSQL** test **Docker container**.
 
-It is deployed on **AWS Elastic Beanstalk** and can be accessed at the following URL:
+It is deployed on **AWS Elastic Beanstalk** and can be accessed at the following URL:<br/>
 http://estore.us-east-1.elasticbeanstalk.com/
 
 ### Project structure
